@@ -1,6 +1,7 @@
 'use strict';
 
 var express = require('express');
+var bbr = require('blue-button-record');
 
 var fhirRouter = require('./lib/fhirRouter');
 

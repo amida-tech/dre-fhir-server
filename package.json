@@ -2,7 +2,7 @@
     "name": "dre-fhir-server",
     "version": "1.5.0-beta.1",
     "description": "DRE FHIR Server",
-    "main": "./index.js",
+    "main": "./server.js",
     "directories": {
         "lib": "lib"
     },
@@ -23,7 +23,8 @@
         "node": ">= 0.10.0"
     },
     "dependencies": {
-        "express": "^4.12.3"
+        "express": "^4.12.3",
+        "blue-button-record": "https://github.com/amida-tech/blue-button-record#fhir"
     },
     "devDependencies": {
         "chai": "^2.2.0",
