@@ -1,0 +1,53 @@
+{
+    "name": "dre-fhir-server",
+    "version": "1.5.0-beta.1",
+    "description": "DRE FHIR Server",
+    "main": "./index.js",
+    "directories": {
+        "lib": "lib"
+    },
+    "scripts": {
+        "test": "grunt mocha",
+        "verify": "grunt"
+    },
+    "author": "Dmitry Kachaev <dmitry@amida-tech.com>",
+    "contributors": [{
+        "name": "Matthew McCall",
+        "email": "matt@amida-tech.com"
+    }, {
+        "name": "Afsin Ustundag",
+        "email": "afsin.ustundag@us.pwc.com"
+    }],
+    "license": "Apache-2.0",
+    "engines": {
+        "node": ">= 0.10.0"
+    },
+    "dependencies": {
+        "express": "^4.12.3"
+    },
+    "devDependencies": {
+        "chai": "^2.2.0",
+        "grunt": "^0.4.5",
+        "grunt-contrib-jshint": "^0.11.1",
+        "grunt-jsbeautifier": "^0.2.10",
+        "grunt-mocha-test": "^0.12.7",
+        "grunt-shell": "^1.1.2",
+        "mocha": "^2.2.4",
+        "supertest": "^0.15.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/amida-tech/dre-fhir-server.git"
+    },
+    "keywords": [
+        "bluebutton",
+        "blue-button",
+        "fhir",
+        "model",
+        "fhir server"
+    ],
+    "bugs": {
+        "url": "https://github.com/amida-tech/dre-fhir-server/issues"
+    },
+    "homepage": "https://github.com/amida-tech/dre-fhir-server"
+}
