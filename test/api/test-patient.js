@@ -3,17 +3,17 @@
 var request = require('supertest');
 
 var app = require('../../server');
+var patientSamples = require('../samples/patient-samples');
 
 describe('patient api', function () {
     var api = request.agent(app);
-    var patients = [{}, {}, {}, {}, {}];
 
     var createPatientIt = function (index) {
-        var patient = patients[index];
+        var patientSample = patientSamples[index];
 
         return function (done) {
             api.post('/fhir/Patient')
-                .send(patient)
+                .send(patientSample)
                 .expect(200)
                 .end(function (err, res) {
                     if (err) {
@@ -25,7 +25,8 @@ describe('patient api', function () {
         };
     };
 
-    for (var i = 0; i < patients.length; ++i) {
+    var n = patientSamples.length;
+    for (var i = 0; i < n; ++i) {
         it('create ' + i, createPatientIt(i));
     }
 

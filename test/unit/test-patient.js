@@ -1,12 +1,14 @@
 'use strict';
 
+var chai = require('chai');
 var bbr = require('blue-button-record');
 
 var patientHandler = require('../../lib/resource/patient');
+var patientSamples = require('../samples/patient-samples')();
+
+var expect = chai.expect;
 
 describe('patient unit', function () {
-    var patients = [{}, {}, {}, {}, {}];
-
     before('connectDatabase', function (done) {
         bbr.connectDatabase('localhost', {
             dbName: 'fhirpatientunit'
@@ -19,23 +21,42 @@ describe('patient unit', function () {
         });
     });
 
+    var patients = {};
+
     var createPatientIt = function (index) {
-        var patient = patients[index];
+        var patientSample = patientSamples[index];
 
         return function (done) {
-            patientHandler.create(bbr, patient, function (err) {
-                done(err);
+            patientHandler.create(bbr, patientSample, function (err, id) {
+                if (err) {
+                    done(err);
+                } else {
+                    patientSample.id = id;
+                    patients[id] = patientSample;
+                    done();
+                }
             });
         };
     };
 
-    for (var i = 0; i < patients.length; ++i) {
+    var n = patientSamples.length;
+
+    for (var i = 0; i < n; ++i) {
         it('create ' + i, createPatientIt(i));
     }
 
     it('get all', function (done) {
-        patientHandler.search(bbr, null, function (err) {
-            done(err);
+        patientHandler.search(bbr, null, function (err, bundle) {
+            if (err) {
+                done(err);
+            } else {
+                expect(bundle.entry).to.have.length(n);
+                for (var j = 0; j < n; ++j) {
+                    var dbPatient = bundle.entry[j].resource;
+                    expect(dbPatient).to.deep.equal(patients[dbPatient.id]);
+                }
+                done();
+            }
         });
     });
 
@@ -46,8 +67,6 @@ describe('patient unit', function () {
     });
 
     after(function (done) {
-        this.timeout(2000);
-
         bbr.disconnect(function (err) {
             done(err);
         });

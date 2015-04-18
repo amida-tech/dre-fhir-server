@@ -1,11 +1,15 @@
 'use strict';
 
 var express = require('express');
-var bbr = require('blue-button-record');
+var bp = require('body-parser');
 
 var fhirRouter = require('./lib/fhirRouter');
 
 var app = express();
+
+app.use(bp.json({
+    'strict': false
+}));
 
 app.use('/fhir', fhirRouter());
 
