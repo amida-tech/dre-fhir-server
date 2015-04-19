@@ -1,19 +1,9 @@
 'use strict';
 
-var express = require('express');
-var bp = require('body-parser');
+var app = require('./lib/app');
+var config = require('./config.json');
 
-var fhirRouter = require('./lib/fhirRouter');
+var fhirServer = module.exports = app(config);
 
-var app = express();
-
-app.use(bp.json({
-    'strict': false
-}));
-
-app.use('/fhir', fhirRouter());
-
-app.listen(3001);
-console.log('listening for requests on port 3001');
-
-module.exports = app;
+fhirServer.listen(config.server.port);
+console.log('listening for requests on port ' + config.server.port);

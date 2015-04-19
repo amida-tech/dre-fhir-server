@@ -1,12 +1,46 @@
 'use strict';
 
 var request = require('supertest');
+var chai = require('chai');
 
-var app = require('../../server');
-var patientSamples = require('../samples/patient-samples');
+var expect = chai.expect;
+var fhirApp = require('../../lib/app');
+var patientSamples = require('../samples/patient-samples')();
 
 describe('patient api', function () {
-    var api = request.agent(app);
+    var app;
+    var server;
+    var api;
+
+    before(function (done) {
+        app = fhirApp({
+            db: {
+                "dbName": "fhirpatientapi"
+            }
+        });
+        server = app.listen(3001, done);
+        api = request.agent(app);
+    });
+
+    it('check config (inits database as well)', function (done) {
+        api.get('/config')
+            .expect(200)
+            .end(function (err, res) {
+                if (err) {
+                    done(err);
+                } else {
+                    expect(res.body.db.dbName).to.equal("fhirpatientapi");
+                    done();
+                }
+            });
+    });
+
+    it('clear database', function (done) {
+        var c = app.get('connection');
+        c.clearDatabase(done);
+    });
+
+    var patients = {};
 
     var createPatientIt = function (index) {
         var patientSample = patientSamples[index];
@@ -19,6 +53,9 @@ describe('patient api', function () {
                     if (err) {
                         return done(err);
                     } else {
+                        var id = res.header.location;
+                        patientSample.id = id;
+                        patients[id] = patientSample;
                         done();
                     }
                 });
@@ -37,8 +74,30 @@ describe('patient api', function () {
                 if (err) {
                     return done(err);
                 } else {
+                    var bundle = res.body;
+                    expect(bundle.entry).to.have.length(n);
+                    for (var j = 0; j < n; ++j) {
+                        var dbPatient = bundle.entry[j].resource;
+                        expect(dbPatient).to.deep.equal(patients[dbPatient.id]);
+                    }
                     done();
                 }
             });
+    });
+
+    it('clear database', function (done) {
+        var c = app.get('connection');
+        c.clearDatabase(done);
+    });
+
+    after(function (done) {
+        var c = app.get('connection');
+        c.disconnect(function (err) {
+            if (err) {
+                done(err);
+            } else {
+                server.close(done);
+            }
+        });
     });
 });
