@@ -45,7 +45,7 @@ describe('patient unit', function () {
         it('create ' + i, createPatientIt(i));
     }
 
-    it('get all', function (done) {
+    it('search (no param)', function (done) {
         patientHandler.search(bbr, null, function (err, bundle) {
             if (err) {
                 done(err);
@@ -59,6 +59,26 @@ describe('patient unit', function () {
             }
         });
     });
+
+    var readIt = function(index) {
+        return function (done) {
+            var patientSample = patientSamples[index];
+            var id = patientSample.id;
+
+            patientHandler.read(bbr, id, function (err, resource) {
+                if (err) {
+                    done(err);
+                } else {
+                    expect(resource).to.deep.equal(patientSample)
+                    done();
+                }
+            });
+        };
+    };
+
+    for (var j = 0; j < n; ++j) {
+        it('read ' + i, readIt(j));
+    }
 
     it('clearDatabase', function (done) {
         bbr.clearDatabase(function (err) {
