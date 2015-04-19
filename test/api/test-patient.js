@@ -67,7 +67,7 @@ describe('patient api', function () {
         it('create ' + i, createPatientIt(i));
     }
 
-    it('get all', function (done) {
+    it('search (no param)', function (done) {
         api.get('/fhir/Patient')
             .expect(200)
             .end(function (err, res) {
@@ -84,6 +84,29 @@ describe('patient api', function () {
                 }
             });
     });
+
+    var readIt = function(index) {
+        return function (done) {
+            var patientSample = patientSamples[index];
+            var id = patientSample.id;
+
+            api.get('/fhir/Patient/' + id)
+                .expect(200)
+                .end(function (err, res) {
+                    if (err) {
+                        return done(err);
+                    } else {
+                        var resource = res.body;
+                        expect(resource).to.deep.equal(patientSample)
+                        done();
+                    }
+                });
+        };
+    };
+
+    for (var j = 0; j < n; ++j) {
+        it('read ' + i, readIt(j));
+    }
 
     it('clear database', function (done) {
         var c = app.get('connection');
