@@ -105,7 +105,41 @@ describe('patient api', function () {
     };
 
     for (var j = 0; j < n; ++j) {
-        it('read ' + i, readIt(j));
+        it('read ' + j, readIt(j));
+    }
+
+    it('exchange samples 0 <-> 1', function () {
+        var patientSample0 = patientSamples[0];
+        var patientSample1 = patientSamples[1];
+        var id0 = patientSample0.id;
+        var id1 = patientSample1.id;
+        patientSample0.id = id1;
+        patientSample1.id = id0;
+        patientSamples[0] = patientSample1;
+        patientSamples[1] = patientSample0;
+    });
+
+    var updateIt = function (index) {
+        return function (done) {
+            var patientSample = patientSamples[index];
+            var id = patientSample.id;
+
+            api.put('/fhir/Patient/' + id)
+                .send(patientSample)
+                .expect(200)
+                .end(function (err, res) {
+                    if (err) {
+                        return done(err);
+                    } else {
+                        done();
+                    }
+                });
+        };
+    };
+
+    for (var k = 0; k < 2; ++k) {
+        it('update ' + k, updateIt(k));
+        it('read ' + k, readIt(k));
     }
 
     it('clear database', function (done) {
