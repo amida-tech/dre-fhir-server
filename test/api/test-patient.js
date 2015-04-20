@@ -42,7 +42,7 @@ describe('patient api', function () {
 
     var patients = {};
 
-    var createPatientIt = function (index) {
+    var createIt = function (index) {
         var patientSample = patientSamples[index];
 
         return function (done) {
@@ -64,26 +64,30 @@ describe('patient api', function () {
 
     var n = patientSamples.length;
     for (var i = 0; i < n; ++i) {
-        it('create ' + i, createPatientIt(i));
+        it('create ' + i, createIt(i));
     }
 
-    it('search (no param)', function (done) {
-        api.get('/fhir/Patient')
-            .expect(200)
-            .end(function (err, res) {
-                if (err) {
-                    return done(err);
-                } else {
-                    var bundle = res.body;
-                    expect(bundle.entry).to.have.length(n);
-                    for (var j = 0; j < n; ++j) {
-                        var dbPatient = bundle.entry[j].resource;
-                        expect(dbPatient).to.deep.equal(patients[dbPatient.id]);
+    var searchIt = function (count) {
+        return function (done) {
+            api.get('/fhir/Patient')
+                .expect(200)
+                .end(function (err, res) {
+                    if (err) {
+                        return done(err);
+                    } else {
+                        var bundle = res.body;
+                        expect(bundle.entry).to.have.length(count);
+                        for (var j = 0; j < count; ++j) {
+                            var dbPatient = bundle.entry[j].resource;
+                            expect(dbPatient).to.deep.equal(patients[dbPatient.id]);
+                        }
+                        done();
                     }
-                    done();
-                }
-            });
-    });
+                });
+        };
+    };
+
+    it('search (no param)', searchIt(n));
 
     var readIt = function (index) {
         return function (done) {
@@ -117,6 +121,8 @@ describe('patient api', function () {
         patientSample1.id = id0;
         patientSamples[0] = patientSample1;
         patientSamples[1] = patientSample0;
+        patients[id1] = patientSample0;
+        patients[id0] = patientSample1;
     });
 
     var updateIt = function (index) {
@@ -141,6 +147,29 @@ describe('patient api', function () {
         it('update ' + k, updateIt(k));
         it('read ' + k, readIt(k));
     }
+
+    var deleteIt = function (index) {
+        return function (done) {
+            var patientSample = patientSamples[index];
+            var id = patientSample.id;
+
+            api.delete('/fhir/Patient/' + id)
+                .expect(200)
+                .end(function (err, res) {
+                    if (err) {
+                        return done(err);
+                    } else {
+                        done();
+                    }
+                });
+        };
+    };
+
+    for (var l = n - 2; l < n; ++l) {
+        it('delete ' + l, deleteIt(l));
+    }
+
+    it('search (no param)', searchIt(n - 2));
 
     it('clear database', function (done) {
         var c = app.get('connection');

@@ -23,7 +23,7 @@ describe('patient unit', function () {
 
     var patients = {};
 
-    var createPatientIt = function (index) {
+    var createIt = function (index) {
         var patientSample = patientSamples[index];
 
         return function (done) {
@@ -42,7 +42,7 @@ describe('patient unit', function () {
     var n = patientSamples.length;
 
     for (var i = 0; i < n; ++i) {
-        it('create ' + i, createPatientIt(i));
+        it('create ' + i, createIt(i));
     }
 
     var searchIt = function (count) {
