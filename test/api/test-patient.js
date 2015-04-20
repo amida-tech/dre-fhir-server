@@ -85,7 +85,7 @@ describe('patient api', function () {
             });
     });
 
-    var readIt = function(index) {
+    var readIt = function (index) {
         return function (done) {
             var patientSample = patientSamples[index];
             var id = patientSample.id;
@@ -97,7 +97,7 @@ describe('patient api', function () {
                         return done(err);
                     } else {
                         var resource = res.body;
-                        expect(resource).to.deep.equal(patientSample)
+                        expect(resource).to.deep.equal(patientSample);
                         done();
                     }
                 });

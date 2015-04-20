@@ -60,7 +60,7 @@ describe('patient unit', function () {
         });
     });
 
-    var readIt = function(index) {
+    var readIt = function (index) {
         return function (done) {
             var patientSample = patientSamples[index];
             var id = patientSample.id;
@@ -69,7 +69,7 @@ describe('patient unit', function () {
                 if (err) {
                     done(err);
                 } else {
-                    expect(resource).to.deep.equal(patientSample)
+                    expect(resource).to.deep.equal(patientSample);
                     done();
                 }
             });
@@ -78,6 +78,36 @@ describe('patient unit', function () {
 
     for (var j = 0; j < n; ++j) {
         it('read ' + i, readIt(j));
+    }
+
+    it('exchange samples 0 <-> 1', function () {
+        var patientSample0 = patientSamples[0];
+        var patientSample1 = patientSamples[1];
+        var id0 = patientSample0.id;
+        var id1 = patientSample1.id;
+        patientSample0.id = id1;
+        patientSample1.id = id0;
+        patientSamples[0] = patientSample1;
+        patientSamples[1] = patientSample0;
+    });
+
+    var updateIt = function (index) {
+        return function (done) {
+            var patientSample = patientSamples[index];
+
+            patientHandler.update(bbr, patientSample, function (err) {
+                if (err) {
+                    done(err);
+                } else {
+                    done();
+                }
+            });
+        };
+    };
+
+    for (var k = 0; k < 2; ++k) {
+        it('update ' + k, updateIt(k));
+        it('read ' + k, readIt(k));
     }
 
     it('clearDatabase', function (done) {
