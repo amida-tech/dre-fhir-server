@@ -25,7 +25,7 @@
     "dependencies": {
         "blue-button-fhir": "^1.5.0-beta.4",
         "blue-button-gen-fhir": "^1.5.0-beta.3",
-        "blue-button-record": "https://github.com/amida-tech/blue-button-record#fhir",
+        "blue-button-record": "^1.5.0-beta.2",
         "body-parser": "^1.12.3",
         "express": "^4.12.3"
     },
