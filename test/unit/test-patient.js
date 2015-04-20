@@ -45,20 +45,24 @@ describe('patient unit', function () {
         it('create ' + i, createPatientIt(i));
     }
 
-    it('search (no param)', function (done) {
-        patientHandler.search(bbr, null, function (err, bundle) {
-            if (err) {
-                done(err);
-            } else {
-                expect(bundle.entry).to.have.length(n);
-                for (var j = 0; j < n; ++j) {
-                    var dbPatient = bundle.entry[j].resource;
-                    expect(dbPatient).to.deep.equal(patients[dbPatient.id]);
+    var searchIt = function (count) {
+        return function (done) {
+            patientHandler.search(bbr, null, function (err, bundle) {
+                if (err) {
+                    done(err);
+                } else {
+                    expect(bundle.entry).to.have.length(count);
+                    for (var j = 0; j < count; ++j) {
+                        var dbPatient = bundle.entry[j].resource;
+                        expect(dbPatient).to.deep.equal(patients[dbPatient.id]);
+                    }
+                    done();
                 }
-                done();
-            }
-        });
-    });
+            });
+        };
+    };
+
+    it('search (no param)', searchIt(n));
 
     var readIt = function (index) {
         return function (done) {
@@ -89,6 +93,8 @@ describe('patient unit', function () {
         patientSample1.id = id0;
         patientSamples[0] = patientSample1;
         patientSamples[1] = patientSample0;
+        patients[id1] = patientSample0;
+        patients[id0] = patientSample1;
     });
 
     var updateIt = function (index) {
@@ -109,6 +115,26 @@ describe('patient unit', function () {
         it('update ' + k, updateIt(k));
         it('read ' + k, readIt(k));
     }
+
+    var deleteIt = function (index) {
+        return function (done) {
+            var patientSample = patientSamples[index];
+
+            patientHandler.delete(bbr, patientSample.id, function (err) {
+                if (err) {
+                    done(err);
+                } else {
+                    done();
+                }
+            });
+        };
+    };
+
+    for (var l = n - 2; l < n; ++l) {
+        it('delete ' + l, deleteIt(l));
+    }
+
+    it('search (no param)', searchIt(n - 2));
 
     it('clearDatabase', function (done) {
         bbr.clearDatabase(function (err) {
