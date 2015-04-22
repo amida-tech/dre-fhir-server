@@ -26,15 +26,11 @@ module.exports = function () {
         var c = req.app.get('connection');
         patientHandler.search(c, null, function (err, bundle) {
             if (err) {
-                done(err);
+                res.status(500);
+                res.send(err);
             } else {
-                if (err) {
-                    res.status(500);
-                    res.send(err);
-                } else {
-                    res.status(200);
-                    res.send(bundle);
-                }
+                res.status(200);
+                res.send(bundle);
             }
         });
     });
