@@ -2,7 +2,7 @@
 
 var express = require('express');
 
-var patientHandler = require('./resource/patient');
+var patientHandler = require('../models/patient');
 
 module.exports = function () {
     var router = express.Router();

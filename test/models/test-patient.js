@@ -3,7 +3,7 @@
 var chai = require('chai');
 var bbr = require('blue-button-record');
 
-var patientHandler = require('../../lib/resource/patient');
+var patientHandler = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
 
 var expect = chai.expect;

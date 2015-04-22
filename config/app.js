@@ -4,8 +4,8 @@ var express = require('express');
 var bp = require('body-parser');
 var _ = require('lodash');
 
-var fhirRouter = require('./fhirRouter');
-var defaultConfig = require('../config.json');
+var fhirRouter = require('../routes/fhir');
+var defaultConfig = require('../config/config.json');
 
 var errorHandler = function (err, req, res, next) {
     console.log(err);

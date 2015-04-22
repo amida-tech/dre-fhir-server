@@ -4,7 +4,7 @@ var request = require('supertest');
 var chai = require('chai');
 
 var expect = chai.expect;
-var fhirApp = require('../../lib/app');
+var fhirApp = require('../../config/app');
 var patientSamples = require('../samples/patient-samples')();
 
 describe('patient api', function () {

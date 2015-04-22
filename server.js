@@ -1,6 +1,6 @@
 'use strict';
 
-var app = require('./lib/app');
+var app = require('./config/app');
 var config = require('./config.json');
 
 var fhirServer = module.exports = app(config);

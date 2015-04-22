@@ -1,6 +1,6 @@
 'use strict';
 
-var fhirUtil = require('../fhir-util');
+var fhirUtil = require('../lib/fhir-util');
 var bbFhir = require('blue-button-fhir');
 var bbGenFhir = require('blue-button-gen-fhir');
 
