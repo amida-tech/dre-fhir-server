@@ -7,11 +7,7 @@ var _ = require('lodash');
 var fhirRouter = require('../routes/fhir');
 var defaultConfig = require('../config/config.json');
 
-var errorHandler = function (err, req, res, next) {
-    console.log(err);
-    res.status(500);
-    res.send('internal error');
-};
+var catchAllErrHandler = require('../middleware/catchAllErrHandler');
 
 var dbmw = function (config) {
     var bbr = require('blue-button-record');
@@ -48,6 +44,6 @@ module.exports = function (overrideConfig) {
         res.send(config);
     });
 
-    app.use(errorHandler);
+    app.use(catchAllErrHandler);
     return app;
 };
