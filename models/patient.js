@@ -3,6 +3,7 @@
 var fhirUtil = require('../lib/fhir-util');
 var bbFhir = require('blue-button-fhir');
 var bbGenFhir = require('blue-button-gen-fhir');
+var modelsUtil = require('./models-util');
 
 exports.create = function (bbr, resource, callback) {
     var bundle = fhirUtil.toBundle(resource);
@@ -10,11 +11,8 @@ exports.create = function (bbr, resource, callback) {
     var demographics = model.data.demographics;
     var name = demographics.name;
     var ptKey = name.first.charAt(0).toLowerCase() + name.last.toLowerCase();
-    var metaData = {
-        type: 'application/json+fhir',
-        name: 'fhir.patient'
-    };
-    bbr.saveSource(ptKey, JSON.stringify(resource, undefined, 4), metaData, 'fhir', function (err, id) {
+
+    modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, id) {
         if (err) {
             callback(err);
         } else {
@@ -67,15 +65,11 @@ exports.update = function (bbr, resource, callback) {
     var bundle = fhirUtil.toBundle(resource);
     var model = bbFhir.toModel(bundle);
     var demographics = model.data.demographics;
-    var metaData = {
-        type: 'application/json+fhir',
-        name: 'fhir.patient'
-    };
     bbr.idToPatientKey('demographics', resource.id, function (err, ptKey) {
         if (err) {
             callback(err);
         } else {
-            bbr.saveSource(ptKey, JSON.stringify(resource, undefined, 4), metaData, 'fhir', function (err, sourceId) {
+            modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, sourceId) {
                 if (err) {
                     callback(err);
                 } else {

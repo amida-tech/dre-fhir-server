@@ -12,11 +12,13 @@ module.exports = function () {
         var c = req.app.get('connection');
         patientHandler.create(c, patient, function (err, id) {
             if (err) {
-                res.status(500);
+                res.status(400);
                 res.send(err);
             } else {
-                res.status(200);
-                res.location(id);
+                var location = [req.baseUrl, 'Patient', id, '_history', '1'].join('/');
+                res.status(201);
+                res.location(location);
+                res.header('ETag', '1');
                 res.send();
             }
         });

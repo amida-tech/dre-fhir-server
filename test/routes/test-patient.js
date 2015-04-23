@@ -7,7 +7,7 @@ var expect = chai.expect;
 var fhirApp = require('../../config/app');
 var patientSamples = require('../samples/patient-samples')();
 
-describe('patient api', function () {
+describe('patient routes', function () {
     var app;
     var server;
     var api;
@@ -48,12 +48,17 @@ describe('patient api', function () {
         return function (done) {
             api.post('/fhir/Patient')
                 .send(patientSample)
-                .expect(200)
+                .expect(201)
                 .end(function (err, res) {
                     if (err) {
                         return done(err);
                     } else {
-                        var id = res.header.location;
+                        var location = res.header.location;
+                        var p = location.split('/');
+                        expect(p).to.have.length(6);
+                        var id = p[3];
+                        p[3] = '';
+                        expect(p).to.deep.equal(['', 'fhir', 'Patient', '', '_history', '1']);
                         patientSample.id = id;
                         patients[id] = patientSample;
                         done();
