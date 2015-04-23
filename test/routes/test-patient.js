@@ -72,10 +72,10 @@ describe('patient routes', function () {
         it('create ' + i, createIt(i));
     }
 
-    var searchIt = function (count) {
+    var searchIt = function (count, isPost) {
         return function (done) {
-            api.get('/fhir/Patient')
-                .expect(200)
+            var request = isPost ? api.post('/fhir/Patient/_search') : api.get('/fhir/Patient');
+            request.expect(200)
                 .end(function (err, res) {
                     if (err) {
                         return done(err);
@@ -92,7 +92,8 @@ describe('patient routes', function () {
         };
     };
 
-    it('search (no param)', searchIt(n));
+    it('search (get - no param)', searchIt(n, false));
+    it('search (post - no param)', searchIt(n, true));
 
     var readIt = function (index) {
         return function (done) {

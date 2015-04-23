@@ -24,7 +24,7 @@ module.exports = function () {
         });
     });
 
-    router.get('/Patient', function (req, res) {
+    var search = function (req, res) {
         var c = req.app.get('connection');
         patientHandler.search(c, null, function (err, bundle) {
             if (err) {
@@ -35,7 +35,10 @@ module.exports = function () {
                 res.send(bundle);
             }
         });
-    });
+    };
+
+    router.get('/Patient', search);
+    router.post('/Patient/_search', search);
 
     router.get('/Patient/:id', function (req, res) {
         var c = req.app.get('connection');
