@@ -6,5 +6,41 @@
     },
     "db": {
 	    "dbName": "dre"
+	},
+	"conformance": {
+		"resourceType": "Conformance",
+		"id": "base",
+		"implementation": {
+			"description": "Amida Technology Solutions Development"
+		},
+		"acceptUnknown": false,
+		"format":["json"],
+		"rest": [{
+			"mode": "server",
+			"resource": [{
+				"type": "Patient",
+				"interaction": [{
+					"code": "read"
+				}, {
+					"code": "update"
+				}, {
+					"code": "delete"
+				}, {
+					"code": "create"
+				}, {
+					"code": "search-type"
+				}],
+				"searchParam": [{
+					"name": "_id",
+					"type": "string"
+				}, {
+					"name": "family",
+					"type": "string"
+				}, {
+					"name": "birthDate",
+					"type": "date"
+				}]
+			}]
+		}]
 	}
 }
