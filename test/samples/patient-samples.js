@@ -75,7 +75,8 @@ var patients = [{
         "given": [
             "JOE"
         ]
-    }]
+    }],
+    "birthDate": "1980-12-13"
 }, {
     "resourceType": "Patient",
     "identifier": [{

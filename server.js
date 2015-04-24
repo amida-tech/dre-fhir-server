@@ -1,7 +1,7 @@
 'use strict';
 
 var app = require('./config/app');
-var config = require('./config.json');
+var config = require('./config/config.json');
 
 var fhirServer = module.exports = app(config);
 
