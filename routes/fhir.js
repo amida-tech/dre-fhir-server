@@ -149,6 +149,11 @@ module.exports = (function () {
             });
         });
 
+        router.get('/metadata', function (req, res) {
+            res.status(200);
+            res.send(conformance);
+        });
+
         return router;
     };
 })();
