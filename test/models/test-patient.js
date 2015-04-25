@@ -8,10 +8,10 @@ var patientSamples = require('../samples/patient-samples')();
 
 var expect = chai.expect;
 
-describe('patient unit', function () {
+describe('models patient', function () {
     before('connectDatabase', function (done) {
         bbr.connectDatabase('localhost', {
-            dbName: 'fhirpatientunit'
+            dbName: 'fhirpatientmodel'
         }, function (err) {
             if (err) {
                 done(err);

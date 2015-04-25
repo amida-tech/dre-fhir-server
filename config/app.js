@@ -37,7 +37,7 @@ module.exports = function (overrideConfig) {
     }));
 
     app.use(dbmw(config));
-    app.use(config.server.fhirUrl, fhirRouter());
+    app.use(config.server.fhirUrl, fhirRouter(config.conformance));
 
     app.get('/config', function (req, res) {
         res.status(200);

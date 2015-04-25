@@ -2,6 +2,7 @@
 
 var request = require('supertest');
 var chai = require('chai');
+var _ = require('lodash');
 
 var expect = chai.expect;
 var fhirApp = require('../../config/app');
@@ -15,7 +16,7 @@ describe('patient routes', function () {
     before(function (done) {
         app = fhirApp({
             db: {
-                "dbName": "fhirpatientapi"
+                "dbName": "fhirpatientsearch"
             }
         });
         server = app.listen(3001, done);
@@ -29,7 +30,7 @@ describe('patient routes', function () {
                 if (err) {
                     done(err);
                 } else {
-                    expect(res.body.db.dbName).to.equal("fhirpatientapi");
+                    expect(res.body.db.dbName).to.equal("fhirpatientsearch");
                     done();
                 }
             });
@@ -39,6 +40,10 @@ describe('patient routes', function () {
         var c = app.get('connection');
         c.clearDatabase(done);
     });
+
+    var patientSamples0Clone = _.cloneDeep(patientSamples[0]);
+    patientSamples0Clone.birthDate = '1978-06-09';
+    patientSamples.push(patientSamples0Clone);
 
     var patients = {};
 
@@ -72,10 +77,13 @@ describe('patient routes', function () {
         it('create ' + i, createIt(i));
     }
 
-    var searchIt = function (count, isPost) {
+    var searchIt = function (count, query) {
         return function (done) {
-            var request = isPost ? api.post('/fhir/Patient/_search') : api.get('/fhir/Patient');
-            request.expect(200)
+            var r = api.get('/fhir/Patient');
+            if (query) {
+                r.query(query);
+            }
+            r.expect(200)
                 .end(function (err, res) {
                     if (err) {
                         return done(err);
@@ -92,90 +100,60 @@ describe('patient routes', function () {
         };
     };
 
-    it('search (get - no param)', searchIt(n, false));
-    it('search (post - no param)', searchIt(n, true));
+    it('search (no param)', searchIt(n));
 
-    var readIt = function (index) {
+    var searchIdIt = function (index, count) {
         return function (done) {
-            var patientSample = patientSamples[index];
-            var id = patientSample.id;
-
-            api.get('/fhir/Patient/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var resource = res.body;
-                        expect(resource).to.deep.equal(patientSample);
-                        done();
-                    }
-                });
+            var id = index >= 0 ? patientSamples[index].id : '123456789012345678901234';
+            var query = {
+                _id: id
+            };
+            var fn = searchIt(count, query);
+            fn(done);
         };
     };
 
-    for (var j = 0; j < n; ++j) {
-        it('read ' + j, readIt(j));
+    for (var i0 = 0; i0 < n; ++i0) {
+        it('search with id ' + i0, searchIdIt(i0, 1));
     }
+    it('search not exists id ' + i, searchIdIt(-1, 0));
 
-    it('exchange samples 0 <-> 1', function () {
-        var patientSample0 = patientSamples[0];
-        var patientSample1 = patientSamples[1];
-        var id0 = patientSample0.id;
-        var id1 = patientSample1.id;
-        patientSample0.id = id1;
-        patientSample1.id = id0;
-        patientSamples[0] = patientSample1;
-        patientSamples[1] = patientSample0;
-        patients[id1] = patientSample0;
-        patients[id0] = patientSample1;
+    var searchFamilyIt = function (index, count) {
+        var family = index >= 0 ? patientSamples[index].name[0].family[0] : 'doesnotexists';
+        var query = {
+            family: family
+        };
+        return searchIt(count, query);
+    };
+
+    it('search family and find 2', searchFamilyIt(0, 2));
+    it('search family and find 1', searchFamilyIt(1, 1));
+    it('search family and find 1', searchFamilyIt(-1, 0));
+
+    var patientSamplesCopy = patientSamples.slice();
+    patientSamplesCopy.sort(function (left, right) {
+        var bdayLeft = left.birthDate;
+        var bdayRight = right.birthDate;
+        var result = (bdayLeft < bdayRight) ? -1 : ((bdayLeft > bdayRight) ? 1 : 0);
+        return result;
     });
 
-    var updateIt = function (index) {
-        return function (done) {
-            var patientSample = patientSamples[index];
-            var id = patientSample.id;
+    var borderIndex = Math.floor(patientSamplesCopy.length / 2);
+    var borderBBday = patientSamplesCopy[borderIndex].birthDate;
 
-            api.put('/fhir/Patient/' + id)
-                .send(patientSample)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        done();
-                    }
-                });
+    var searchBirthdayIt = function (prefix, count) {
+        var query = {
+            birthDate: prefix + borderBBday
         };
+        return searchIt(count, query);
     };
 
-    for (var k = 0; k < 2; ++k) {
-        it('update ' + k, updateIt(k));
-        it('read ' + k, readIt(k));
-    }
+    var npsc = patientSamplesCopy.length;
 
-    var deleteIt = function (index) {
-        return function (done) {
-            var patientSample = patientSamples[index];
-            var id = patientSample.id;
-
-            api.delete('/fhir/Patient/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        done();
-                    }
-                });
-        };
-    };
-
-    for (var l = n - 2; l < n; ++l) {
-        it('delete ' + l, deleteIt(l));
-    }
-
-    it('search (get - no param)', searchIt(n - 2));
+    it('search birthDate and find ' + borderIndex, searchBirthdayIt('<', borderIndex));
+    it('search birthDate and find ' + (borderIndex + 1), searchBirthdayIt('<=', borderIndex + 1));
+    it('search birthDate and find ' + (npsc - borderIndex - 1), searchBirthdayIt('>', npsc - borderIndex - 1));
+    it('search birthDate and find ' + (npsc - borderIndex), searchBirthdayIt('>=', (npsc - borderIndex)));
 
     it('clear database', function (done) {
         var c = app.get('connection');

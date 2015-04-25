@@ -1,34 +1,98 @@
 'use strict';
 
-var fhirUtil = require('../lib/fhir-util');
+var bundleUtil = require('../lib/bundle-util');
 var bbFhir = require('blue-button-fhir');
 var bbGenFhir = require('blue-button-gen-fhir');
 var modelsUtil = require('./models-util');
+var bbu = require('blue-button-util');
+
+var bbudt = bbu.datetime;
+
+var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
+    var currPtKey = candidate + (index === 0 ? index : '');
+    bbr.patientKeyToId('demographics', currPtKey, function (err, id) {
+        if (err) {
+            callback(err);
+        } else if (!id) {
+            callback(null, currPtKey);
+        } else {
+            ++index;
+            findPatientKey(bbr, candidate, index, callback);
+        }
+    });
+};
 
 exports.create = function (bbr, resource, callback) {
-    var bundle = fhirUtil.toBundle(resource);
+    var bundle = bundleUtil.toBundle(resource);
     var model = bbFhir.toModel(bundle);
     var demographics = model.data.demographics;
     var name = demographics.name;
-    var ptKey = name.first.charAt(0).toLowerCase() + name.last.toLowerCase();
+    var ptKeyCandidate = name.first.charAt(0).toLowerCase() + name.last.toLowerCase();
 
-    modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, id) {
+    findPatientKey(bbr, ptKeyCandidate, 0, function (err, ptKey) {
         if (err) {
             callback(err);
         } else {
-            bbr.saveSection('demographics', ptKey, demographics, id, function (err, id) {
+            modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, id) {
                 if (err) {
                     callback(err);
                 } else {
-                    callback(null, id.toString());
+                    bbr.saveSection('demographics', ptKey, demographics, id, function (err, id) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback(null, id.toString());
+                        }
+                    });
                 }
             });
         }
     });
 };
 
+var paramsToBBRParams = (function () {
+    var map = {
+        'family': 'data.name.last',
+        'birthDate': 'data.dob.point.date',
+        '_id': '_id'
+    };
+
+    var prefixMap = {
+        '<': '$lt',
+        '>': '$gt',
+        '>=': '$gte',
+        '<=': '$lte'
+    };
+
+    return function (params) {
+        var keys = Object.keys(params);
+        var queryObject = {};
+        keys.forEach(function (key) {
+            var target = map[key];
+            if (target) {
+                var paramsElement = params[key];
+                var value = paramsElement.value;
+                if (paramsElement.type === 'date') {
+                    var modelDate = bbudt.dateToModel(value);
+                    value = modelDate.date;
+                }
+                if (paramsElement.prefix) {
+                    var op = prefixMap[paramsElement.prefix];
+                    var valueWithAction = {};
+                    valueWithAction[op] = value;
+                    queryObject[target] = valueWithAction;
+                } else {
+                    queryObject[target] = value;
+                }
+            }
+        });
+        return queryObject;
+    };
+})();
+
 exports.search = function (bbr, params, callback) {
-    bbr.getMultiSection('demographics', function (err, results) {
+    var bbrParams = params ? paramsToBBRParams(params) : {};
+    bbr.getMultiSection('demographics', bbrParams, function (err, results) {
         if (err) {
             callback(err);
         } else {
@@ -62,7 +126,7 @@ exports.read = function (bbr, id, callback) {
 };
 
 exports.update = function (bbr, resource, callback) {
-    var bundle = fhirUtil.toBundle(resource);
+    var bundle = bundleUtil.toBundle(resource);
     var model = bbFhir.toModel(bundle);
     var demographics = model.data.demographics;
     bbr.idToPatientKey('demographics', resource.id, function (err, ptKey) {
