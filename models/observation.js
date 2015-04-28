@@ -38,7 +38,7 @@ exports.create = function (bbr, resource, callback) {
 
 exports.search = function (bbr, params, callback) {
     var bbrParams = params ? {} : {};
-    bbr.getMultiSection('vitals', bbrParams, function (err, results) {
+    bbr.getMultiSection('vitals', bbrParams, true, function (err, results) {
         if (err) {
             callback(err);
         } else {
@@ -57,6 +57,29 @@ exports.search = function (bbr, params, callback) {
                 entry: bundleEntry
             };
             callback(null, fhirResults);
+        }
+    });
+};
+
+exports.read = function (bbr, id, callback) {
+    bbr.idToPatientInfo('vitals', id, function (err, patientInfo) {
+        if (err) {
+            callback(err);
+        } else {
+            bbr.getEntry('vitals', patientInfo.key, id, function (err, result) {
+                if (err) {
+                    callback(err);
+                } else {
+                    var resource = bbGenFhir.entryToResource('vitals', result);
+                    resource.id = result._id.toString();
+                    resource.subject = {
+                        reference: patientInfo.reference,
+                        display: patientInfo.display
+                    };
+                    delete resource.extension;
+                    callback(null, resource);
+                }
+            });
         }
     });
 };

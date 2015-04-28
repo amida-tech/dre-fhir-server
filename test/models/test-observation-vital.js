@@ -116,6 +116,31 @@ describe('models observation vital', function () {
 
     it('search (no param)', searchIt(obsSamples.panelStart0 + obsSamples.panelStart1));
 
+    var readIt = function (obsSamplesSet, index) {
+        return function (done) {
+            var obsSample = obsSamplesSet[index];
+            var id = obsSample.id;
+
+            obsModel.read(bbr, id, function (err, resource) {
+                if (err) {
+                    done(err);
+                } else {
+                    delete resource.subject.display;
+                    expect(resource).to.deep.equal(obsSample);
+                    done();
+                }
+            });
+        };
+    };
+
+    for (var k0 = 0; k0 < obsSamples.panelStart0; ++k0) {
+        it('read observation patient 0 ' + k0, readIt(obsSamplesSet0, k0));
+    }
+
+    for (var k1 = 0; k1 < obsSamples.panelStart1; ++k1) {
+        it('read observation patient 1 ' + k1, readIt(obsSamplesSet1, k1));
+    }
+
     it('clearDatabase', function (done) {
         bbr.clearDatabase(function (err) {
             done(err);
