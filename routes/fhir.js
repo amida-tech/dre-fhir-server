@@ -2,34 +2,39 @@
 
 var express = require('express');
 var path = require('path');
+var util = require('util');
 
 var fpp = require('../middleware/fhir-param-parser');
 
 module.exports = (function () {
-    var interactionToRoute = {
-        'read': [{
-            'path': '/Patient/:id',
-            'method': 'get'
-        }],
-        'update': [{
-            'path': '/Patient/:id',
-            'method': 'put'
-        }],
-        'delete': [{
-            'path': '/Patient/:id',
-            'method': 'delete'
-        }],
-        'create': [{
-            'path': '/Patient',
-            'method': 'post'
-        }],
-        'search-type': [{
-            'path': '/Patient',
-            'method': 'get'
-        }, {
-            'path': '/Patient/_search',
-            'method': 'post'
-        }]
+    var interactionToRoute = function (resourceType) {
+        var typePath = util.format('/%s', resourceType);
+        var instancePath = util.format('/%s/:id', resourceType);
+        return {
+            'read': [{
+                'path': instancePath,
+                'method': 'get'
+            }],
+            'update': [{
+                'path': instancePath,
+                'method': 'put'
+            }],
+            'delete': [{
+                'path': instancePath,
+                'method': 'delete'
+            }],
+            'create': [{
+                'path': typePath,
+                'method': 'post'
+            }],
+            'search-type': [{
+                'path': typePath,
+                'method': 'get'
+            }, {
+                'path': util.format('/%s/_search', resourceType),
+                'method': 'post'
+            }]
+        };
     };
 
     var interactionImplementation = {
@@ -140,7 +145,7 @@ module.exports = (function () {
             resource.interaction.forEach(function (interaction) {
                 var code = interaction.code;
                 var implementation = interactionImplementation[code](model, searchParam);
-                var routeInfos = interactionToRoute[code];
+                var routeInfos = interactionToRoute(resourceType)[code];
                 routeInfos.forEach(function (routeInfo) {
                     var path = routeInfo.path;
                     var method = routeInfo.method;
