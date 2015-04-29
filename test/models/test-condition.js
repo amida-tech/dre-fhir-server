@@ -3,8 +3,8 @@
 var chai = require('chai');
 var bbr = require('blue-button-record');
 
-var model = require('../../models/observation');
-var samples = require('../samples/observation-vital-samples');
+var model = require('../../models/condition');
+var samples = require('../samples/condition-samples');
 var patientModel = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
 var _ = require('lodash');
@@ -13,8 +13,8 @@ var shared = require('./shared');
 
 var expect = chai.expect;
 
-describe('models observation vital', function () {
-    before('connectDatabase', shared.connectDatabase('fhirobservationvitalmodel'));
+describe('models condition', function () {
+    before('connectDatabase', shared.connectDatabase('fhirconditionmodel'));
 
     var samplesSet0 = samples.set0();
     var samplesSet1 = samples.set1();
@@ -36,32 +36,12 @@ describe('models observation vital', function () {
     var entryMapById = {};
     var entryIds = [];
 
-    var populatePanelIt = function (samplesSet, index, offset) {
-        return function () {
-            var obsSample = samplesSet[index];
-            obsSample.related.forEach(function (related) {
-                var index = related.target.reference;
-                related.target.reference = entryIds[index + offset];
-            });
-        };
-    };
-
-    _.range(samples.panelStart0).forEach(function (i) {
+    _.range(samplesSet0.length).forEach(function (i) {
         it('create for patient-0 ' + i, shared.create(model, samplesSet0[i], entryIds, entryMapById));
     });
 
-    _.range(samples.panelStart0, samplesSet0.length).forEach(function (i) {
-        it('populate panel for patient-0 ' + i, populatePanelIt(samplesSet0, i, 0));
-        it('create panel for patient-0 ' + i, shared.create(model, samplesSet0[i], entryIds, entryMapById));
-    });
-
-    _.range(samples.panelStart1).forEach(function (i) {
+    _.range(samplesSet1.length).forEach(function (i) {
         it('create for patient-1 ' + i, shared.create(model, samplesSet1[i], entryIds, entryMapById));
-    });
-
-    _.range(samples.panelStart1, samplesSet1.length).forEach(function (i) {
-        it('populate panel for patient-1 ' + i, populatePanelIt(samplesSet1, i, 0));
-        it('create panel for patient-1 ' + i, shared.create(model, samplesSet1[i], entryIds, entryMapById));
     });
 
     it('search (no param)', shared.search(model, entryMapById, samplesSet0.length + samplesSet1.length));
@@ -75,8 +55,10 @@ describe('models observation vital', function () {
     });
 
     it('update values', function () {
-        samplesSet0[0].valueQuantity.value += 1;
-        samplesSet1[0].valueQuantity.value += 1;
+        samplesSet0[0].onsetDateTime = '2002-01-01';
+        samplesSet0[0].dateAsserted = '2002-01-01';
+        samplesSet1[0].onsetDateTime = '2003-05-05';
+        samplesSet1[0].dateAsserted = '2003-05-05';
     });
 
     it('detect updated not equal db for patient-0', shared.readNegative(model, samplesSet0[0]));

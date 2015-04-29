@@ -8,21 +8,12 @@ var obsSamples = require('../samples/observation-vital-samples');
 var patientModel = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
 
+var shared = require('./shared');
+
 var expect = chai.expect;
 
 describe('models observation vital search', function () {
-    before('connectDatabase', function (done) {
-        bbr.connectDatabase('localhost', {
-            dbName: 'fhirobservationvitalsearchmodel',
-            bundle_sections: ['vitals']
-        }, function (err) {
-            if (err) {
-                done(err);
-            } else {
-                bbr.clearDatabase(done);
-            }
-        });
-    });
+    before('connectDatabase', shared.connectDatabase('fhirobservationvitalsearchmodel'));
 
     var obsSamplesSet0 = obsSamples.set0();
     var obsSamplesSet1 = obsSamples.set1();

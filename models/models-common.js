@@ -128,7 +128,9 @@ exports.search = function (bbr, sectionName, params, callback) {
                                 };
                             });
                         }
-                        delete resource.extension;
+                        if (resource.extension) {
+                            delete resource.extension;
+                        }
                         return {
                             resource: resource
                         };
@@ -170,7 +172,9 @@ exports.read = function (bbr, sectionName, id, callback) {
                             };
                         });
                     }
-                    delete resource.extension;
+                    if (resource.extension) {
+                        delete resource.extension;
+                    }
                     callback(null, resource);
                 }
             });
