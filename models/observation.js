@@ -83,3 +83,46 @@ exports.read = function (bbr, id, callback) {
         }
     });
 };
+
+exports.update = function (bbr, resource, callback) {
+    var vital = bbFhir.resourceToModelEntry(resource, 'vitals');
+    if (!vital) {
+        callback(new Error('Observation resource appears to be invalid'));
+        return;
+    }
+    bbr.idToPatientInfo('vitals', resource.id, function (err, patientInfo) {
+        if (err) {
+            callback(err);
+        } else {
+            modelsUtil.saveResourceAsSource(bbr, patientInfo.key, resource, function (err, sourceId) {
+                if (err) {
+                    callback(err);
+                } else {
+                    bbr.replaceEntry('vitals', patientInfo.key, resource.id, sourceId, vital, function (err, id) {
+                        if (err) {
+                            callback(err);
+                        } else {
+                            callback(null);
+                        }
+                    });
+                }
+            });
+        }
+    });
+};
+
+exports.delete = function (bbr, id, callback) {
+    bbr.idToPatientKey('vitals', id, function (err, ptKey) {
+        if (err) {
+            callback(err);
+        } else {
+            bbr.removeEntry('vitals', ptKey, id, function (err) {
+                if (err) {
+                    callback(err);
+                } else {
+                    callback(null);
+                }
+            });
+        }
+    });
+};

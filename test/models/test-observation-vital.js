@@ -141,6 +141,71 @@ describe('models observation vital', function () {
         it('read observation patient 1 ' + k1, readIt(obsSamplesSet1, k1));
     }
 
+    var updateIt = function (obsSamplesSet, index) {
+        return function (done) {
+            var obsSample = obsSamplesSet[index];
+
+            obsModel.update(bbr, obsSample, function (err) {
+                if (err) {
+                    done(err);
+                } else {
+                    done();
+                }
+            });
+        };
+    };
+
+    var notReadIt = function (obsSamplesSet, index) {
+        return function (done) {
+            var obsSample = obsSamplesSet[index];
+            var id = obsSample.id;
+
+            obsModel.read(bbr, id, function (err, resource) {
+                if (err) {
+                    done(err);
+                } else {
+                    delete resource.subject.display;
+                    expect(resource).to.not.deep.equal(obsSample);
+                    done();
+                }
+            });
+        };
+    };
+
+    it('update values', function () {
+        obsSamplesSet0[0].valueQuantity.value += 1;
+        obsSamplesSet1[0].valueQuantity.value += 1;
+    });
+
+    it('read not equal pat 0 0', notReadIt(obsSamplesSet0, 0));
+    it('update pat 0 0', updateIt(obsSamplesSet0, 0));
+    it('read pat 0 0', readIt(obsSamplesSet0, 0));
+    it('read not equal pat 1 0', notReadIt(obsSamplesSet1, 0));
+    it('update pat 1 0', updateIt(obsSamplesSet1, 0));
+    it('read pat 1 0', readIt(obsSamplesSet1, 0));
+
+    var deleteIt = function (obsSamplesSet, index) {
+        return function (done) {
+            var obsSample = obsSamplesSet[index];
+
+            obsModel.delete(bbr, obsSample.id, function (err) {
+                if (err) {
+                    done(err);
+                } else {
+                    done();
+                }
+            });
+        };
+    };
+
+    var n0 = obsSamples.panelStart0 - 1;
+    var n1 = obsSamples.panelStart1 - 1;
+
+    it('delete pat 0 ' + n0, deleteIt(obsSamplesSet0, n0));
+    it('delete pat 1 ' + n1, deleteIt(obsSamplesSet1, n1));
+
+    it('search (no param)', searchIt(n0 + n1));
+
     it('clearDatabase', function (done) {
         bbr.clearDatabase(function (err) {
             done(err);
