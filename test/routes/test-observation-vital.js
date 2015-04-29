@@ -5,10 +5,10 @@ var chai = require('chai');
 
 var expect = chai.expect;
 var fhirApp = require('../../config/app');
-var obsSamples = require('../samples/observation-vital-samples');
+var samples = require('../samples/observation-vital-samples');
 var patientSamples = require('../samples/patient-samples')();
 
-describe('observation routes', function () {
+describe('routes observation vital', function () {
     var app;
     var server;
     var api;
@@ -41,14 +41,14 @@ describe('observation routes', function () {
         c.clearDatabase(done);
     });
 
-    var obsSamplesSet0 = obsSamples.set0();
-    var obsSamplesSet1 = obsSamples.set1();
+    var samplesSet0 = samples.set0();
+    var samplesSet1 = samples.set1();
 
-    it('create wout patient', function (done) {
-        var obsSample = obsSamplesSet0[0];
+    it('create with patient missing', function (done) {
+        var sample = samplesSet0[0];
 
         api.post('/fhir/Observation')
-            .send(obsSample)
+            .send(sample)
             .expect(400)
             .end(done);
     });
@@ -78,29 +78,29 @@ describe('observation routes', function () {
     };
 
     for (var i = 0; i < 2; ++i) {
-        it('create ' + i, createPatientIt(i));
+        it('create patient ' + i, createPatientIt(i));
     }
 
-    it('assign patient 0 to samples', function () {
-        [obsSamplesSet0, obsSamplesSet1].forEach(function (obsSamplesSet, index) {
+    it('assign patients to samples', function () {
+        [samplesSet0, samplesSet1].forEach(function (samplesSet, index) {
             var reference = patientSamples[index].id;
-            obsSamplesSet.forEach(function (obsSample) {
-                obsSample.subject = {
+            samplesSet.forEach(function (sample) {
+                sample.subject = {
                     reference: reference
                 };
             });
         });
     });
 
-    var vitals = {};
-    var vitalIds = [];
+    var entryMapById = {};
+    var entryIds = [];
 
-    var createIt = function (obsSamplesSet, index) {
-        var obsSample = obsSamplesSet[index];
+    var createIt = function (samplesSet, index) {
+        var sample = samplesSet[index];
 
         return function (done) {
             api.post('/fhir/Observation')
-                .send(obsSample)
+                .send(sample)
                 .expect(201)
                 .end(function (err, res) {
                     if (err) {
@@ -112,41 +112,41 @@ describe('observation routes', function () {
                         var id = p[3];
                         p[3] = '';
                         expect(p).to.deep.equal(['', 'fhir', 'Observation', '', '_history', '1']);
-                        obsSample.id = id;
-                        vitals[id] = obsSample;
-                        vitalIds.push(id);
+                        sample.id = id;
+                        entryMapById[id] = sample;
+                        entryIds.push(id);
                         done();
                     }
                 });
         };
     };
 
-    var populatePanelIt = function (obsSamplesSet, index, offset) {
+    var populatePanelIt = function (samplesSet, index, offset) {
         return function () {
-            var obsSample = obsSamplesSet[index];
-            obsSample.related.forEach(function (related) {
+            var sample = samplesSet[index];
+            sample.related.forEach(function (related) {
                 var index = related.target.reference;
-                related.target.reference = vitalIds[index + offset];
+                related.target.reference = entryIds[index + offset];
             });
         };
     };
 
-    for (var j0 = 0; j0 < obsSamples.panelStart0; ++j0) {
-        it('create observation patient 0 ' + j0, createIt(obsSamplesSet0, j0));
+    for (var j0 = 0; j0 < samples.panelStart0; ++j0) {
+        it('create for patient-0 ' + j0, createIt(samplesSet0, j0));
     }
 
-    for (var jj0 = obsSamples.panelStart0; jj0 < obsSamplesSet0.length; ++jj0) {
-        it('populate panel patient 0 ' + jj0, populatePanelIt(obsSamplesSet0, jj0, 0));
-        it('create observation patient 0 ' + jj0, createIt(obsSamplesSet0, jj0));
+    for (var jj0 = samples.panelStart0; jj0 < samplesSet0.length; ++jj0) {
+        it('populate panel for patient-0 ' + jj0, populatePanelIt(samplesSet0, jj0, 0));
+        it('create panel for patient-0 ' + jj0, createIt(samplesSet0, jj0));
     }
 
-    for (var j1 = 0; j1 < obsSamples.panelStart1; ++j1) {
-        it('create observation patient 1 ' + j1, createIt(obsSamplesSet1, j1));
+    for (var j1 = 0; j1 < samples.panelStart1; ++j1) {
+        it('create for patient-1 ' + j1, createIt(samplesSet1, j1));
     }
 
-    for (var jj1 = obsSamples.panelStart1; jj1 < obsSamplesSet1.length; ++jj1) {
-        it('populate panel patient 1 ' + jj1, populatePanelIt(obsSamplesSet1, jj1, obsSamplesSet0.length));
-        it('create observation patient 1 ' + jj1, createIt(obsSamplesSet1, jj1));
+    for (var jj1 = samples.panelStart1; jj1 < samplesSet1.length; ++jj1) {
+        it('populate panel for patient-1 ' + jj1, populatePanelIt(samplesSet1, jj1, samplesSet0.length));
+        it('create for patient-1 ' + jj1, createIt(samplesSet1, jj1));
     }
 
     var searchIt = function (count, isPost) {
@@ -162,7 +162,7 @@ describe('observation routes', function () {
                         for (var j = 0; j < count; ++j) {
                             var dbVital = bundle.entry[j].resource;
                             delete dbVital.subject.display;
-                            expect(dbVital).to.deep.equal(vitals[dbVital.id]);
+                            expect(dbVital).to.deep.equal(entryMapById[dbVital.id]);
                         }
                         done();
                     }
@@ -170,14 +170,14 @@ describe('observation routes', function () {
         };
     };
 
-    var n = obsSamplesSet0.length + obsSamplesSet1.length;
+    var n = samplesSet0.length + samplesSet1.length;
     it('search (get - no param)', searchIt(n, false));
     it('search (post - no param)', searchIt(n, true));
 
-    var readIt = function (obsSamplesSet, index) {
+    var readIt = function (samplesSet, index) {
         return function (done) {
-            var obsSample = obsSamplesSet[index];
-            var id = obsSample.id;
+            var sample = samplesSet[index];
+            var id = sample.id;
 
             api.get('/fhir/Observation/' + id)
                 .expect(200)
@@ -187,33 +187,33 @@ describe('observation routes', function () {
                     } else {
                         var resource = res.body;
                         delete resource.subject.display;
-                        expect(resource).to.deep.equal(obsSample);
+                        expect(resource).to.deep.equal(sample);
                         done();
                     }
                 });
         };
     };
 
-    for (var k0 = 0; k0 < obsSamplesSet0.length; ++k0) {
-        it('read observation patient 0 ' + k0, readIt(obsSamplesSet0, k0));
+    for (var k0 = 0; k0 < samplesSet0.length; ++k0) {
+        it('read for patient-0 ' + k0, readIt(samplesSet0, k0));
     }
 
-    for (var k1 = 0; k1 < obsSamplesSet0.length; ++k1) {
-        it('read observation patient 1 ' + k1, readIt(obsSamplesSet1, k1));
+    for (var k1 = 0; k1 < samplesSet0.length; ++k1) {
+        it('read for patient-1 ' + k1, readIt(samplesSet1, k1));
     }
 
     it('update values', function () {
-        obsSamplesSet0[0].valueQuantity.value += 1;
-        obsSamplesSet1[0].valueQuantity.value += 1;
+        samplesSet0[0].valueQuantity.value += 1;
+        samplesSet1[0].valueQuantity.value += 1;
     });
 
-    var updateIt = function (obsSamplesSet, index) {
+    var updateIt = function (samplesSet, index) {
         return function (done) {
-            var obsSample = obsSamplesSet[index];
-            var id = obsSample.id;
+            var sample = samplesSet[index];
+            var id = sample.id;
 
             api.put('/fhir/Observation/' + id)
-                .send(obsSample)
+                .send(sample)
                 .expect(200)
                 .end(function (err, res) {
                     if (err) {
@@ -225,10 +225,10 @@ describe('observation routes', function () {
         };
     };
 
-    var notReadIt = function (obsSamplesSet, index) {
+    var notReadIt = function (samplesSet, index) {
         return function (done) {
-            var obsSample = obsSamplesSet[index];
-            var id = obsSample.id;
+            var sample = samplesSet[index];
+            var id = sample.id;
 
             api.get('/fhir/Observation/' + id)
                 .expect(200)
@@ -238,24 +238,24 @@ describe('observation routes', function () {
                     } else {
                         var resource = res.body;
                         delete resource.subject.display;
-                        expect(resource).to.not.deep.equal(obsSample);
+                        expect(resource).to.not.deep.equal(sample);
                         done();
                     }
                 });
         };
     };
 
-    it('read not equal pat 0 0', notReadIt(obsSamplesSet0, 0));
-    it('update pat 0 0', updateIt(obsSamplesSet0, 0));
-    it('read pat 0 0', readIt(obsSamplesSet0, 0));
-    it('read not equal pat 1 0', notReadIt(obsSamplesSet1, 0));
-    it('update pat 1 0', updateIt(obsSamplesSet1, 0));
-    it('read pat 1 0', readIt(obsSamplesSet1, 0));
+    it('detect updated not equal db for patient-0', notReadIt(samplesSet0, 0));
+    it('update for patient-0', updateIt(samplesSet0, 0));
+    it('read for patient-0', readIt(samplesSet0, 0));
+    it('detect updated not equal db for patient-1', notReadIt(samplesSet1, 0));
+    it('update for patient-1', updateIt(samplesSet1, 0));
+    it('read for patient-1', readIt(samplesSet1, 0));
 
-    var deleteIt = function (obsSamplesSet, index) {
+    var deleteIt = function (samplesSet, index) {
         return function (done) {
-            var obsSample = obsSamplesSet[index];
-            var id = obsSample.id;
+            var sample = samplesSet[index];
+            var id = sample.id;
 
             api.delete('/fhir/Observation/' + id)
                 .expect(200)
@@ -269,11 +269,11 @@ describe('observation routes', function () {
         };
     };
 
-    var n0 = obsSamplesSet0.length - 1;
-    var n1 = obsSamplesSet1.length - 1;
+    var n0 = samplesSet0.length - 1;
+    var n1 = samplesSet1.length - 1;
 
-    it('delete pat 0 ' + n0, deleteIt(obsSamplesSet0, n0));
-    it('delete pat 1 ' + n1, deleteIt(obsSamplesSet1, n1));
+    it('delete last for patient-0', deleteIt(samplesSet0, n0));
+    it('delete last for patient-1', deleteIt(samplesSet1, n1));
 
     it('search (no param)', searchIt(n0 + n1));
 
