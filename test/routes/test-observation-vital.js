@@ -252,7 +252,6 @@ describe('observation routes', function () {
     it('update pat 1 0', updateIt(obsSamplesSet1, 0));
     it('read pat 1 0', readIt(obsSamplesSet1, 0));
 
-
     var deleteIt = function (obsSamplesSet, index) {
         return function (done) {
             var obsSample = obsSamplesSet[index];
@@ -277,7 +276,6 @@ describe('observation routes', function () {
     it('delete pat 1 ' + n1, deleteIt(obsSamplesSet1, n1));
 
     it('search (no param)', searchIt(n0 + n1));
-
 
     it('clear database', function (done) {
         var c = app.get('connection');

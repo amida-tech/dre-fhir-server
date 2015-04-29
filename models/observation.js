@@ -5,6 +5,9 @@ var bbFhir = require('blue-button-fhir');
 var bbGenFhir = require('blue-button-gen-fhir');
 var modelsUtil = require('./models-util');
 var bbu = require('blue-button-util');
+var _ = require('lodash');
+
+var bbudt = bbu.datetime;
 
 exports.create = function (bbr, resource, callback) {
     var vital = bbFhir.resourceToModelEntry(resource, 'vitals');
@@ -41,37 +44,101 @@ exports.create = function (bbr, resource, callback) {
     });
 };
 
+var paramsToBBRParams = (function () {
+    var map = {
+        '_id': '_id',
+        'patient': 'pat_key'
+    };
+
+    var prefixMap = {
+        '<': '$lt',
+        '>': '$gt',
+        '>=': '$gte',
+        '<=': '$lte'
+    };
+
+    return function (params) {
+        var keys = Object.keys(params);
+        var queryObject = {};
+        keys.forEach(function (key) {
+            var target = map[key];
+            if (target) {
+                var paramsElement = params[key];
+                var value = paramsElement.value;
+                if (paramsElement.type === 'date') {
+                    var modelDate = bbudt.dateToModel(value);
+                    value = modelDate.date;
+                }
+                if (paramsElement.prefix) {
+                    var op = prefixMap[paramsElement.prefix];
+                    var valueWithAction = {};
+                    valueWithAction[op] = value;
+                    queryObject[target] = valueWithAction;
+                } else {
+                    queryObject[target] = value;
+                }
+            }
+        });
+        return queryObject;
+    };
+})();
+
+var paramsTransform = function (bbr, params, callback) {
+    if (params) {
+        params = _.cloneDeep(params);
+        if (params.patient) {
+            bbr.idToPatientInfo('demographics', params.patient.value, function (err, patientInfo) {
+                if (err) {
+                    callback(err);
+                } else {
+                    params.patient.value = patientInfo.key;
+                    callback(null, paramsToBBRParams(params));
+                }
+            });
+        } else {
+            callback(null, paramsToBBRParams(params));
+        }
+    } else {
+        callback(null, {});
+    }
+};
+
 exports.search = function (bbr, params, callback) {
-    var bbrParams = params ? {} : {};
-    bbr.getMultiSection('vitals', bbrParams, true, function (err, results) {
+    paramsTransform(bbr, params, function (err, bbrParams) {
         if (err) {
             callback(err);
         } else {
-            var bundleEntry = results.map(function (result) {
-                var resource = bbGenFhir.entryToResource('vitals', result);
-                resource.id = result._id.toString();
-                resource.subject = result._pt;
-                if (result._components && result._components.length) {
-                    resource.related = result._components.map(function (component) {
+            bbr.getMultiSection('vitals', bbrParams, true, function (err, results) {
+                if (err) {
+                    callback(err);
+                } else {
+                    var bundleEntry = results.map(function (result) {
+                        var resource = bbGenFhir.entryToResource('vitals', result);
+                        resource.id = result._id.toString();
+                        resource.subject = result._pt;
+                        if (result._components && result._components.length) {
+                            resource.related = result._components.map(function (component) {
+                                return {
+                                    target: {
+                                        reference: component
+                                    },
+                                    type: "has-component"
+                                };
+                            });
+                        }
+                        delete resource.extension;
                         return {
-                            target: {
-                                reference: component
-                            },
-                            type: "has-component"
+                            resource: resource
                         };
                     });
+                    var fhirResults = {
+                        resourceType: 'Bundle',
+                        total: bundleEntry.length,
+                        entry: bundleEntry
+                    };
+                    callback(null, fhirResults);
                 }
-                delete resource.extension;
-                return {
-                    resource: resource
-                };
             });
-            var fhirResults = {
-                resourceType: 'Bundle',
-                total: bundleEntry.length,
-                entry: bundleEntry
-            };
-            callback(null, fhirResults);
         }
     });
 };
