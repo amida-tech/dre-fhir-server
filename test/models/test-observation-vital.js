@@ -64,7 +64,20 @@ describe('models observation vital', function () {
         it('create panel for patient-1 ' + i, shared.create(model, samplesSet1[i], entryIds, entryMapById));
     });
 
-    it('search (no param)', shared.search(model, entryMapById, samplesSet0.length + samplesSet1.length));
+    it('search (no param)', shared.search(model, null, entryMapById, samplesSet0.length + samplesSet1.length));
+
+    _.range(samplesSet0.length).forEach(function (i) {
+        it('search by id for patient-0 ' + i, shared.searchById(model, samplesSet0[i], entryMapById, 1));
+    });
+
+    _.range(samplesSet1.length).forEach(function (i) {
+        it('search by id for patient-1 ' + i, shared.searchById(model, samplesSet1[i], entryMapById, 1));
+    });
+
+    it('search not existing id', shared.searchById(model, null, entryMapById, 0));
+
+    it('search by patient-0', shared.searchByPatient(model, patientSamples[0], entryMapById, samplesSet0.length));
+    it('search by patient-1', shared.searchByPatient(model, patientSamples[1], entryMapById, samplesSet1.length));
 
     _.range(samplesSet0.length).forEach(function (i) {
         it('read for patient-0 ' + i, shared.read(model, samplesSet0[i]));
@@ -92,7 +105,7 @@ describe('models observation vital', function () {
     it('delete last for patient-0', shared.delete(model, samplesSet0[n0]));
     it('delete last for patient-1', shared.delete(model, samplesSet1[n1]));
 
-    it('search (no param)', shared.search(model, entryMapById, n0 + n1));
+    it('search (no param)', shared.search(model, null, entryMapById, n0 + n1));
 
     after(shared.clearDatabase);
 });

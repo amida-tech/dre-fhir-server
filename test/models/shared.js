@@ -61,9 +61,9 @@ exports.assignPatient = function (sampleSet, patientSample) {
     });
 };
 
-exports.search = function (model, map, count) {
+var search = exports.search = function (model, params, map, count) {
     return function (done) {
-        model.search(bbr, null, function (err, bundle) {
+        model.search(bbr, params, function (err, bundle) {
             if (err) {
                 done(err);
             } else {
@@ -76,6 +76,32 @@ exports.search = function (model, map, count) {
                 done();
             }
         });
+    };
+};
+
+exports.searchById = function (model, sample, map, count) {
+    return function (done) {
+        var id = sample ? sample.id : '123456789012345678901234';
+        var params = {
+            _id: {
+                value: id
+            }
+        };
+        var fn = search(model, params, map, count);
+        fn(done);
+    };
+};
+
+exports.searchByPatient = function (model, sample, map, count) {
+    return function (done) {
+        var params = {
+            patient: {
+                value: sample.id,
+                type: 'reference'
+            }
+        };
+        var fn = search(model, params, map, count);
+        fn(done);
     };
 };
 
