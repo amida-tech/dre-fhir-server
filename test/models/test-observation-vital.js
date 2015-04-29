@@ -88,10 +88,6 @@ describe('models observation vital', function () {
         };
     };
 
-    for (var j0 = 0; j0 < obsSamples.panelStart0; ++j0) {
-        it('create observation patient 0 ' + j0, createIt(obsSamplesSet0, j0));
-    }
-
     var populatePanelIt = function (obsSamplesSet, index, offset) {
         return function () {
             var obsSample = obsSamplesSet[index];
@@ -101,6 +97,10 @@ describe('models observation vital', function () {
             });
         };
     };
+
+    for (var j0 = 0; j0 < obsSamples.panelStart0; ++j0) {
+        it('create observation patient 0 ' + j0, createIt(obsSamplesSet0, j0));
+    }
 
     for (var jj0 = obsSamples.panelStart0; jj0 < obsSamplesSet0.length; ++jj0) {
         it('populate panel patient 0 ' + jj0, populatePanelIt(obsSamplesSet0, jj0, 0));

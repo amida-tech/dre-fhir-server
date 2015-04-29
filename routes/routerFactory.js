@@ -88,7 +88,7 @@ module.exports = (function () {
             };
 
         },
-        'create': function (model) {
+        'create': function (model, resourceType) {
             return function (req, res) {
                 var patient = req.body;
                 var c = req.app.get('connection');
@@ -97,7 +97,7 @@ module.exports = (function () {
                         res.status(400);
                         res.send(err);
                     } else {
-                        var location = [req.baseUrl, 'Patient', id, '_history', '1'].join('/');
+                        var location = [req.baseUrl, resourceType, id, '_history', '1'].join('/');
                         res.status(201);
                         res.location(location);
                         res.header('ETag', '1');
@@ -106,7 +106,7 @@ module.exports = (function () {
                 });
             };
         },
-        'search-type': function (model, searchParam) {
+        'search-type': function (model, resourceType, searchParam) {
             return [
                 fpp(searchParam),
                 function (req, res) {
@@ -144,7 +144,7 @@ module.exports = (function () {
 
             resource.interaction.forEach(function (interaction) {
                 var code = interaction.code;
-                var implementation = interactionImplementation[code](model, searchParam);
+                var implementation = interactionImplementation[code](model, resourceType, searchParam);
                 var routeInfos = interactionToRoute(resourceType)[code];
                 routeInfos.forEach(function (routeInfo) {
                     var path = routeInfo.path;

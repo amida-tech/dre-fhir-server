@@ -40,6 +40,23 @@
 					"name": "birthDate",
 					"type": "date"
 				}]
+			}, {
+				"type": "Observation",
+				"interaction": [{
+					"code": "read"
+				}, {
+					"code": "update"
+				}, {
+					"code": "delete"
+				}, {
+					"code": "create"
+				}, {
+					"code": "search-type"
+				}],
+				"searchParam": [{
+					"name": "_id",
+					"type": "string"
+				}]
 			}]
 		}]
 	}
