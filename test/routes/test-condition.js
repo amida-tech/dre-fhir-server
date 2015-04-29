@@ -5,10 +5,10 @@ var chai = require('chai');
 
 var expect = chai.expect;
 var fhirApp = require('../../config/app');
-var samples = require('../samples/observation-vital-samples');
+var samples = require('../samples/condition-samples');
 var patientSamples = require('../samples/patient-samples')();
 
-describe('routes observation vital', function () {
+describe('routes condition', function () {
     var app;
     var server;
     var api;
@@ -16,7 +16,7 @@ describe('routes observation vital', function () {
     before(function (done) {
         app = fhirApp({
             db: {
-                "dbName": "fhirobservationvitalapi"
+                "dbName": "fhirconditionapi"
             }
         });
         server = app.listen(3001, done);
@@ -30,7 +30,7 @@ describe('routes observation vital', function () {
                 if (err) {
                     done(err);
                 } else {
-                    expect(res.body.db.dbName).to.equal("fhirobservationvitalapi");
+                    expect(res.body.db.dbName).to.equal("fhirconditionapi");
                     done();
                 }
             });
@@ -47,7 +47,7 @@ describe('routes observation vital', function () {
     it('create with patient missing', function (done) {
         var sample = samplesSet0[0];
 
-        api.post('/fhir/Observation')
+        api.post('/fhir/Condition')
             .send(sample)
             .expect(400)
             .end(done);
@@ -99,7 +99,7 @@ describe('routes observation vital', function () {
         var sample = samplesSet[index];
 
         return function (done) {
-            api.post('/fhir/Observation')
+            api.post('/fhir/Condition')
                 .send(sample)
                 .expect(201)
                 .end(function (err, res) {
@@ -111,7 +111,7 @@ describe('routes observation vital', function () {
                         expect(p).to.have.length(6);
                         var id = p[3];
                         p[3] = '';
-                        expect(p).to.deep.equal(['', 'fhir', 'Observation', '', '_history', '1']);
+                        expect(p).to.deep.equal(['', 'fhir', 'Condition', '', '_history', '1']);
                         sample.id = id;
                         entryMapById[id] = sample;
                         entryIds.push(id);
@@ -121,37 +121,18 @@ describe('routes observation vital', function () {
         };
     };
 
-    var populatePanelIt = function (samplesSet, index, offset) {
-        return function () {
-            var sample = samplesSet[index];
-            sample.related.forEach(function (related) {
-                var index = related.target.reference;
-                related.target.reference = entryIds[index + offset];
-            });
-        };
-    };
-
-    for (var j0 = 0; j0 < samples.panelStart0; ++j0) {
+    for (var j0 = 0; j0 < samplesSet0.length; ++j0) {
         it('create for patient-0 ' + j0, createIt(samplesSet0, j0));
     }
 
-    for (var jj0 = samples.panelStart0; jj0 < samplesSet0.length; ++jj0) {
-        it('populate panel for patient-0 ' + jj0, populatePanelIt(samplesSet0, jj0, 0));
-        it('create panel for patient-0 ' + jj0, createIt(samplesSet0, jj0));
-    }
 
-    for (var j1 = 0; j1 < samples.panelStart1; ++j1) {
+    for (var j1 = 0; j1 < samplesSet1.length; ++j1) {
         it('create for patient-1 ' + j1, createIt(samplesSet1, j1));
-    }
-
-    for (var jj1 = samples.panelStart1; jj1 < samplesSet1.length; ++jj1) {
-        it('populate panel for patient-1 ' + jj1, populatePanelIt(samplesSet1, jj1, samplesSet0.length));
-        it('create for patient-1 ' + jj1, createIt(samplesSet1, jj1));
     }
 
     var searchIt = function (count, isPost, query) {
         return function (done) {
-            var request = isPost ? api.post('/fhir/Observation/_search') : api.get('/fhir/Observation');
+            var request = isPost ? api.post('/fhir/Condition/_search') : api.get('/fhir/Condition');
             if (query) {
                 request.query(query);
             }
@@ -182,7 +163,7 @@ describe('routes observation vital', function () {
             var sample = samplesSet[index];
             var id = sample.id;
 
-            api.get('/fhir/Observation/' + id)
+            api.get('/fhir/Condition/' + id)
                 .expect(200)
                 .end(function (err, res) {
                     if (err) {
@@ -206,8 +187,10 @@ describe('routes observation vital', function () {
     }
 
     it('update values', function () {
-        samplesSet0[0].valueQuantity.value += 1;
-        samplesSet1[0].valueQuantity.value += 1;
+        samplesSet0[0].onsetDateTime = '2002-01-01';
+        samplesSet0[0].dateAsserted = '2002-01-01';
+        samplesSet1[0].onsetDateTime = '2003-05-05';
+        samplesSet1[0].dateAsserted = '2003-05-05';
     });
 
     var updateIt = function (samplesSet, index) {
@@ -215,7 +198,7 @@ describe('routes observation vital', function () {
             var sample = samplesSet[index];
             var id = sample.id;
 
-            api.put('/fhir/Observation/' + id)
+            api.put('/fhir/Condition/' + id)
                 .send(sample)
                 .expect(200)
                 .end(function (err, res) {
@@ -233,7 +216,7 @@ describe('routes observation vital', function () {
             var sample = samplesSet[index];
             var id = sample.id;
 
-            api.get('/fhir/Observation/' + id)
+            api.get('/fhir/Condition/' + id)
                 .expect(200)
                 .end(function (err, res) {
                     if (err) {
@@ -260,7 +243,7 @@ describe('routes observation vital', function () {
             var sample = samplesSet[index];
             var id = sample.id;
 
-            api.delete('/fhir/Observation/' + id)
+            api.delete('/fhir/Condition/' + id)
                 .expect(200)
                 .end(function (err, res) {
                     if (err) {
