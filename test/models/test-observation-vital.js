@@ -92,9 +92,29 @@ describe('models observation vital', function () {
         it('create observation patient 0 ' + j0, createIt(obsSamplesSet0, j0));
     }
 
+    var populatePanelIt = function(obsSamplesSet, index, offset) {
+        return function() {
+            var obsSample = obsSamplesSet[index];
+            obsSample.related.forEach(function(related) {
+                var index = related.target.reference;
+                related.target.reference = vitalIds[index + offset];
+            });
+        };
+    };
+
+    for (var jj0 = obsSamples.panelStart0; jj0 < obsSamplesSet0.length; ++jj0) {
+        it('populate panel patient 0 ' + jj0,  populatePanelIt(obsSamplesSet0, jj0, 0));
+        it('create observation patient 0 ' + jj0, createIt(obsSamplesSet0, jj0));
+    };
+
     for (var j1 = 0; j1 < obsSamples.panelStart1; ++j1) {
         it('create observation patient 1 ' + j1, createIt(obsSamplesSet1, j1));
     }
+
+    for (var jj1 = obsSamples.panelStart1; jj1 < obsSamplesSet1.length; ++jj1) {
+        it('populate panel patient 1 ' + jj1,  populatePanelIt(obsSamplesSet1, jj1, obsSamplesSet0.length));
+        it('create observation patient 1 ' + jj1, createIt(obsSamplesSet1, jj1));
+    };
 
     var searchIt = function (count) {
         return function (done) {
@@ -114,7 +134,7 @@ describe('models observation vital', function () {
         };
     };
 
-    it('search (no param)', searchIt(obsSamples.panelStart0 + obsSamples.panelStart1));
+    it('search (no param)', searchIt(obsSamplesSet0.length + obsSamplesSet1.length));
 
     var readIt = function (obsSamplesSet, index) {
         return function (done) {
@@ -133,11 +153,11 @@ describe('models observation vital', function () {
         };
     };
 
-    for (var k0 = 0; k0 < obsSamples.panelStart0; ++k0) {
+    for (var k0 = 0; k0 < obsSamplesSet0.length; ++k0) {
         it('read observation patient 0 ' + k0, readIt(obsSamplesSet0, k0));
     }
 
-    for (var k1 = 0; k1 < obsSamples.panelStart1; ++k1) {
+    for (var k1 = 0; k1 < obsSamplesSet0.length; ++k1) {
         it('read observation patient 1 ' + k1, readIt(obsSamplesSet1, k1));
     }
 
@@ -198,8 +218,8 @@ describe('models observation vital', function () {
         };
     };
 
-    var n0 = obsSamples.panelStart0 - 1;
-    var n1 = obsSamples.panelStart1 - 1;
+    var n0 = obsSamplesSet0.length - 1;
+    var n1 = obsSamplesSet1.length - 1;
 
     it('delete pat 0 ' + n0, deleteIt(obsSamplesSet0, n0));
     it('delete pat 1 ' + n1, deleteIt(obsSamplesSet1, n1));

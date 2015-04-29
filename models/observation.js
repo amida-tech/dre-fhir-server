@@ -12,6 +12,11 @@ exports.create = function (bbr, resource, callback) {
         callback(new Error('Observation resource appears to be invalid'));
         return;
     }
+    if (resource.related) {
+    	vital._components = resource.related.map(function(related) {
+    		return related.target.reference;
+    	});
+    };
 
     var vitals = [vital];
 
@@ -46,6 +51,16 @@ exports.search = function (bbr, params, callback) {
                 var resource = bbGenFhir.entryToResource('vitals', result);
                 resource.id = result._id.toString();
                 resource.subject = result._pt;
+                if (result._components && result._components.length) {
+                	resource.related = result._components.map(function(component) {
+                		return {
+                			target: {
+                				reference: component
+                			},
+                			type: "has-component"
+                		}
+                	});
+                }
                 delete resource.extension;
                 return {
                     resource: resource
@@ -76,6 +91,16 @@ exports.read = function (bbr, id, callback) {
                         reference: patientInfo.reference,
                         display: patientInfo.display
                     };
+                    if (result._components && result._components.length) {
+                    	resource.related = result._components.map(function(component) {
+                			return {
+                				target: {
+                					reference: component.toString()
+                				},
+                				type: "has-component"
+                			}
+                		});
+                    }
                     delete resource.extension;
                     callback(null, resource);
                 }
