@@ -13,10 +13,10 @@ exports.create = function (bbr, resource, callback) {
         return;
     }
     if (resource.related) {
-    	vital._components = resource.related.map(function(related) {
-    		return related.target.reference;
-    	});
-    };
+        vital._components = resource.related.map(function (related) {
+            return related.target.reference;
+        });
+    }
 
     var vitals = [vital];
 
@@ -52,14 +52,14 @@ exports.search = function (bbr, params, callback) {
                 resource.id = result._id.toString();
                 resource.subject = result._pt;
                 if (result._components && result._components.length) {
-                	resource.related = result._components.map(function(component) {
-                		return {
-                			target: {
-                				reference: component
-                			},
-                			type: "has-component"
-                		}
-                	});
+                    resource.related = result._components.map(function (component) {
+                        return {
+                            target: {
+                                reference: component
+                            },
+                            type: "has-component"
+                        };
+                    });
                 }
                 delete resource.extension;
                 return {
@@ -92,14 +92,14 @@ exports.read = function (bbr, id, callback) {
                         display: patientInfo.display
                     };
                     if (result._components && result._components.length) {
-                    	resource.related = result._components.map(function(component) {
-                			return {
-                				target: {
-                					reference: component.toString()
-                				},
-                				type: "has-component"
-                			}
-                		});
+                        resource.related = result._components.map(function (component) {
+                            return {
+                                target: {
+                                    reference: component.toString()
+                                },
+                                type: "has-component"
+                            };
+                        });
                     }
                     delete resource.extension;
                     callback(null, resource);
