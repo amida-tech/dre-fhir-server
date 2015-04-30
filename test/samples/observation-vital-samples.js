@@ -14,7 +14,7 @@ exports.set1 = function () {
     var set = _.cloneDeep(observations);
     for (var i = 0; i < 5; ++i) {
         var value = set[i].valueQuantity.value;
-        set[i].valueQuantity.value = value = 20;
+        set[i].valueQuantity.value = value + 20;
     }
     return set;
 };
