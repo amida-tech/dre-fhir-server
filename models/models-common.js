@@ -10,7 +10,16 @@ var modelsUtil = require('./models-util');
 
 var bbudt = bbu.datetime;
 
-exports.create = function (bbr, sectionName, resource, callback) {
+var methods = {};
+
+module.exports = function (options) {
+    options = options || {};
+    var result = Object.create(methods);
+    result.patientRefKey = options.patientRefKey || 'subject';
+    return result;
+};
+
+methods.create = function (bbr, sectionName, resource, callback) {
     var entry = bbFhir.resourceToModelEntry(resource, sectionName);
     if (!entry) {
         var msg = util.format('%s resource appears to be invalid', resource.resourceType);
@@ -25,7 +34,7 @@ exports.create = function (bbr, sectionName, resource, callback) {
 
     var section = [entry];
 
-    modelsUtil.findPatientKey(bbr, resource, 'subject', function (err, ptKey) {
+    modelsUtil.findPatientKey(bbr, resource, this.patientRefKey, function (err, ptKey) {
         if (err) {
             callback(err);
         } else {
@@ -105,7 +114,8 @@ var paramsTransform = function (bbr, params, callback) {
     }
 };
 
-exports.search = function (bbr, sectionName, params, callback) {
+methods.search = function (bbr, sectionName, params, callback) {
+    var patientRefKey = this.patientRefKey;
     paramsTransform(bbr, params, function (err, bbrParams) {
         if (err) {
             callback(err);
@@ -117,7 +127,7 @@ exports.search = function (bbr, sectionName, params, callback) {
                     var bundleEntry = results.map(function (result) {
                         var resource = bbGenFhir.entryToResource(sectionName, result);
                         resource.id = result._id.toString();
-                        resource.subject = result._pt;
+                        resource[patientRefKey] = result._pt;
                         if (result._components && result._components.length) {
                             resource.related = result._components.map(function (component) {
                                 return {
@@ -147,7 +157,8 @@ exports.search = function (bbr, sectionName, params, callback) {
     });
 };
 
-exports.read = function (bbr, sectionName, id, callback) {
+methods.read = function (bbr, sectionName, id, callback) {
+    var patientRefKey = this.patientRefKey;
     bbr.idToPatientInfo(sectionName, id, function (err, patientInfo) {
         if (err) {
             callback(err);
@@ -158,7 +169,7 @@ exports.read = function (bbr, sectionName, id, callback) {
                 } else {
                     var resource = bbGenFhir.entryToResource(sectionName, result);
                     resource.id = result._id.toString();
-                    resource.subject = {
+                    resource[patientRefKey] = {
                         reference: patientInfo.reference,
                         display: patientInfo.display
                     };
@@ -182,7 +193,7 @@ exports.read = function (bbr, sectionName, id, callback) {
     });
 };
 
-exports.update = function (bbr, sectionName, resource, callback) {
+methods.update = function (bbr, sectionName, resource, callback) {
     var entry = bbFhir.resourceToModelEntry(resource, sectionName);
     if (!entry) {
         var msg = util.format('%s resource appears to be invalid', resource.resourceType);
@@ -210,7 +221,7 @@ exports.update = function (bbr, sectionName, resource, callback) {
     });
 };
 
-exports.delete = function (bbr, sectionName, id, callback) {
+methods.delete = function (bbr, sectionName, id, callback) {
     bbr.idToPatientKey(sectionName, id, function (err, ptKey) {
         if (err) {
             callback(err);

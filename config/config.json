@@ -80,6 +80,26 @@
 					"name": "patient",
 					"type": "reference"
 				}]
+			}, {
+				"type": "AllergyIntolerance",
+				"interaction": [{
+					"code": "read"
+				}, {
+					"code": "update"
+				}, {
+					"code": "delete"
+				}, {
+					"code": "create"
+				}, {
+					"code": "search-type"
+				}],
+				"searchParam": [{
+					"name": "_id",
+					"type": "string"
+				}, {
+					"name": "patient",
+					"type": "reference"
+				}]
 			}]
 		}]
 	}

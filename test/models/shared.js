@@ -3,14 +3,21 @@
 var chai = require('chai');
 var bbr = require('blue-button-record');
 
-var obsModel = require('../../models/observation');
-var obsSamples = require('../samples/observation-vital-samples');
 var patientModel = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
 
 var expect = chai.expect;
 
-exports.connectDatabase = function (dbName) {
+var methods = {};
+
+module.exports = function (options) {
+    var result = Object.create(methods);
+    options = options || {};
+    result.patientRefKey = options.patientRefKey || 'subject';
+    return result;
+};
+
+methods.connectDatabase = function (dbName) {
     return function (done) {
         bbr.connectDatabase('localhost', {
             dbName: dbName,
@@ -25,7 +32,7 @@ exports.connectDatabase = function (dbName) {
     };
 };
 
-exports.detectMissingPatient = function (model, sample) {
+methods.detectMissingPatient = function (model, sample) {
     return function (done) {
         model.create(bbr, sample, function (err) {
             if (err) {
@@ -37,7 +44,7 @@ exports.detectMissingPatient = function (model, sample) {
     };
 };
 
-exports.create = function (model, sample, list, map) {
+methods.create = function (model, sample, list, map) {
     return function (done) {
         model.create(bbr, sample, function (err, id) {
             if (err) {
@@ -52,16 +59,18 @@ exports.create = function (model, sample, list, map) {
     };
 };
 
-exports.assignPatient = function (sampleSet, patientSample) {
+methods.assignPatient = function (sampleSet, patientSample) {
+    var patientRefKey = this.patientRefKey;
     var reference = patientSample.id;
     sampleSet.forEach(function (sample) {
-        sample.subject = {
+        sample[patientRefKey] = {
             reference: reference
         };
     });
 };
 
-var search = exports.search = function (model, params, map, count) {
+methods.search = function (model, params, map, count) {
+    var patientRefKey = this.patientRefKey;
     return function (done) {
         model.search(bbr, params, function (err, bundle) {
             if (err) {
@@ -70,7 +79,7 @@ var search = exports.search = function (model, params, map, count) {
                 expect(bundle.entry).to.have.length(count);
                 for (var j = 0; j < count; ++j) {
                     var dbResource = bundle.entry[j].resource;
-                    delete dbResource.subject.display;
+                    delete dbResource[patientRefKey].display;
                     expect(dbResource).to.deep.equal(map[dbResource.id]);
                 }
                 done();
@@ -79,7 +88,8 @@ var search = exports.search = function (model, params, map, count) {
     };
 };
 
-exports.searchById = function (model, sample, map, count) {
+methods.searchById = function (model, sample, map, count) {
+    var self = this;
     return function (done) {
         var id = sample ? sample.id : '123456789012345678901234';
         var params = {
@@ -87,12 +97,13 @@ exports.searchById = function (model, sample, map, count) {
                 value: id
             }
         };
-        var fn = search(model, params, map, count);
+        var fn = self.search(model, params, map, count);
         fn(done);
     };
 };
 
-exports.searchByPatient = function (model, sample, map, count) {
+methods.searchByPatient = function (model, sample, map, count) {
+    var self = this;
     return function (done) {
         var params = {
             patient: {
@@ -100,19 +111,20 @@ exports.searchByPatient = function (model, sample, map, count) {
                 type: 'reference'
             }
         };
-        var fn = search(model, params, map, count);
+        var fn = self.search(model, params, map, count);
         fn(done);
     };
 };
 
-exports.read = function (model, sample) {
+methods.read = function (model, sample) {
+    var patientRefKey = this.patientRefKey;
     return function (done) {
         var id = sample.id;
         model.read(bbr, id, function (err, resource) {
             if (err) {
                 done(err);
             } else {
-                delete resource.subject.display;
+                delete resource[patientRefKey].display;
                 expect(resource).to.deep.equal(sample);
                 done();
             }
@@ -120,14 +132,15 @@ exports.read = function (model, sample) {
     };
 };
 
-exports.readNegative = function (model, sample) {
+methods.readNegative = function (model, sample) {
+    var patientRefKey = this.patientRefKey;
     return function (done) {
         var id = sample.id;
         model.read(bbr, id, function (err, resource) {
             if (err) {
                 done(err);
             } else {
-                delete resource.subject.display;
+                delete resource[patientRefKey].display;
                 expect(resource).to.not.deep.equal(sample);
                 done();
             }
@@ -135,7 +148,7 @@ exports.readNegative = function (model, sample) {
     };
 };
 
-exports.update = function (model, sample) {
+methods.update = function (model, sample) {
     return function (done) {
         model.update(bbr, sample, function (err) {
             if (err) {
@@ -147,7 +160,7 @@ exports.update = function (model, sample) {
     };
 };
 
-exports.delete = function (model, sample) {
+methods.delete = function (model, sample) {
     return function (done) {
         model.delete(bbr, sample.id, function (err) {
             if (err) {
@@ -159,7 +172,7 @@ exports.delete = function (model, sample) {
     };
 };
 
-exports.clearDatabase = function (done) {
+methods.clearDatabase = function (done) {
     bbr.clearDatabase(function (err) {
         if (err) {
             done(err);

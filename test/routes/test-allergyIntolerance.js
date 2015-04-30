@@ -5,10 +5,10 @@ var chai = require('chai');
 
 var expect = chai.expect;
 var fhirApp = require('../../config/app');
-var samples = require('../samples/condition-samples');
+var samples = require('../samples/allergyIntolerance-samples');
 var patientSamples = require('../samples/patient-samples')();
 
-describe('routes condition', function () {
+describe('routes allergyIntolerance', function () {
     var app;
     var server;
     var api;
@@ -16,7 +16,7 @@ describe('routes condition', function () {
     before(function (done) {
         app = fhirApp({
             db: {
-                "dbName": "fhirconditionapi"
+                "dbName": "fhirallergyintoleranceapi"
             }
         });
         server = app.listen(3001, done);
@@ -30,7 +30,7 @@ describe('routes condition', function () {
                 if (err) {
                     done(err);
                 } else {
-                    expect(res.body.db.dbName).to.equal("fhirconditionapi");
+                    expect(res.body.db.dbName).to.equal("fhirallergyintoleranceapi");
                     done();
                 }
             });
@@ -47,7 +47,7 @@ describe('routes condition', function () {
     it('create with patient missing', function (done) {
         var sample = samplesSet0[0];
 
-        api.post('/fhir/Condition')
+        api.post('/fhir/AllergyIntolerance')
             .send(sample)
             .expect(400)
             .end(done);
@@ -85,7 +85,7 @@ describe('routes condition', function () {
         [samplesSet0, samplesSet1].forEach(function (samplesSet, index) {
             var reference = patientSamples[index].id;
             samplesSet.forEach(function (sample) {
-                sample.subject = {
+                sample.patient = {
                     reference: reference
                 };
             });
@@ -99,7 +99,7 @@ describe('routes condition', function () {
         var sample = samplesSet[index];
 
         return function (done) {
-            api.post('/fhir/Condition')
+            api.post('/fhir/AllergyIntolerance')
                 .send(sample)
                 .expect(201)
                 .end(function (err, res) {
@@ -111,7 +111,7 @@ describe('routes condition', function () {
                         expect(p).to.have.length(6);
                         var id = p[3];
                         p[3] = '';
-                        expect(p).to.deep.equal(['', 'fhir', 'Condition', '', '_history', '1']);
+                        expect(p).to.deep.equal(['', 'fhir', 'AllergyIntolerance', '', '_history', '1']);
                         sample.id = id;
                         entryMapById[id] = sample;
                         entryIds.push(id);
@@ -131,7 +131,7 @@ describe('routes condition', function () {
 
     var searchIt = function (count, isPost, query) {
         return function (done) {
-            var request = isPost ? api.post('/fhir/Condition/_search') : api.get('/fhir/Condition');
+            var request = isPost ? api.post('/fhir/AllergyIntolerance/_search') : api.get('/fhir/AllergyIntolerance');
             if (query) {
                 request.query(query);
             }
@@ -144,7 +144,7 @@ describe('routes condition', function () {
                         expect(bundle.entry).to.have.length(count);
                         for (var j = 0; j < count; ++j) {
                             var dbVital = bundle.entry[j].resource;
-                            delete dbVital.subject.display;
+                            delete dbVital.patient.display;
                             expect(dbVital).to.deep.equal(entryMapById[dbVital.id]);
                         }
                         done();
@@ -162,14 +162,14 @@ describe('routes condition', function () {
             var sample = samplesSet[index];
             var id = sample.id;
 
-            api.get('/fhir/Condition/' + id)
+            api.get('/fhir/AllergyIntolerance/' + id)
                 .expect(200)
                 .end(function (err, res) {
                     if (err) {
                         return done(err);
                     } else {
                         var resource = res.body;
-                        delete resource.subject.display;
+                        delete resource.patient.display;
                         expect(resource).to.deep.equal(sample);
                         done();
                     }
@@ -186,10 +186,8 @@ describe('routes condition', function () {
     }
 
     it('update values', function () {
-        samplesSet0[0].onsetDateTime = '2002-01-01';
-        samplesSet0[0].dateAsserted = '2002-01-01';
-        samplesSet1[0].onsetDateTime = '2003-05-05';
-        samplesSet1[0].dateAsserted = '2003-05-05';
+        samplesSet0[0].recordedDate = '2002-01-01';
+        samplesSet1[0].recordedDate = '2003-05-05';
     });
 
     var updateIt = function (samplesSet, index) {
@@ -197,7 +195,7 @@ describe('routes condition', function () {
             var sample = samplesSet[index];
             var id = sample.id;
 
-            api.put('/fhir/Condition/' + id)
+            api.put('/fhir/AllergyIntolerance/' + id)
                 .send(sample)
                 .expect(200)
                 .end(function (err, res) {
@@ -215,14 +213,14 @@ describe('routes condition', function () {
             var sample = samplesSet[index];
             var id = sample.id;
 
-            api.get('/fhir/Condition/' + id)
+            api.get('/fhir/AllergyIntolerance/' + id)
                 .expect(200)
                 .end(function (err, res) {
                     if (err) {
                         return done(err);
                     } else {
                         var resource = res.body;
-                        delete resource.subject.display;
+                        delete resource.patient.display;
                         expect(resource).to.not.deep.equal(sample);
                         done();
                     }
@@ -242,7 +240,7 @@ describe('routes condition', function () {
             var sample = samplesSet[index];
             var id = sample.id;
 
-            api.delete('/fhir/Condition/' + id)
+            api.delete('/fhir/AllergyIntolerance/' + id)
                 .expect(200)
                 .end(function (err, res) {
                     if (err) {

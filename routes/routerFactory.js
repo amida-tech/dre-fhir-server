@@ -137,7 +137,7 @@ module.exports = (function () {
         var rest = conformance.rest[0];
         rest.resource.forEach(function (resource) {
             var resourceType = resource.type;
-            var modelName = resourceType.toLowerCase();
+            var modelName = resourceType.charAt(0).toLowerCase() + resourceType.substring(1, resourceType.length);
             var modelPath = path.join('..', 'models', modelName);
             var model = require(modelPath);
             var searchParam = resource.searchParam;
