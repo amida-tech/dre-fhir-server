@@ -13,13 +13,14 @@ var bbudt = bbu.datetime;
 var methods = {};
 
 module.exports = function (options) {
-    options = options || {};
     var result = Object.create(methods);
+    result.sectionName = options.sectionName;
     result.patientRefKey = options.patientRefKey || 'subject';
     return result;
 };
 
-methods.create = function (bbr, sectionName, resource, callback) {
+methods.create = function (bbr, resource, callback) {
+    var sectionName = this.sectionName;
     var entry = bbFhir.resourceToModelEntry(resource, sectionName);
     if (!entry) {
         var msg = util.format('%s resource appears to be invalid', resource.resourceType);
@@ -114,7 +115,8 @@ var paramsTransform = function (bbr, params, callback) {
     }
 };
 
-methods.search = function (bbr, sectionName, params, callback) {
+methods.search = function (bbr, params, callback) {
+    var sectionName = this.sectionName;
     var patientRefKey = this.patientRefKey;
     paramsTransform(bbr, params, function (err, bbrParams) {
         if (err) {
@@ -138,9 +140,6 @@ methods.search = function (bbr, sectionName, params, callback) {
                                 };
                             });
                         }
-                        if (resource.extension) {
-                            delete resource.extension;
-                        }
                         return {
                             resource: resource
                         };
@@ -157,7 +156,8 @@ methods.search = function (bbr, sectionName, params, callback) {
     });
 };
 
-methods.read = function (bbr, sectionName, id, callback) {
+methods.read = function (bbr, id, callback) {
+    var sectionName = this.sectionName;
     var patientRefKey = this.patientRefKey;
     bbr.idToPatientInfo(sectionName, id, function (err, patientInfo) {
         if (err) {
@@ -183,9 +183,6 @@ methods.read = function (bbr, sectionName, id, callback) {
                             };
                         });
                     }
-                    if (resource.extension) {
-                        delete resource.extension;
-                    }
                     callback(null, resource);
                 }
             });
@@ -193,7 +190,8 @@ methods.read = function (bbr, sectionName, id, callback) {
     });
 };
 
-methods.update = function (bbr, sectionName, resource, callback) {
+methods.update = function (bbr, resource, callback) {
+    var sectionName = this.sectionName;
     var entry = bbFhir.resourceToModelEntry(resource, sectionName);
     if (!entry) {
         var msg = util.format('%s resource appears to be invalid', resource.resourceType);
@@ -221,7 +219,8 @@ methods.update = function (bbr, sectionName, resource, callback) {
     });
 };
 
-methods.delete = function (bbr, sectionName, id, callback) {
+methods.delete = function (bbr, id, callback) {
+    var sectionName = this.sectionName;
     bbr.idToPatientKey(sectionName, id, function (err, ptKey) {
         if (err) {
             callback(err);

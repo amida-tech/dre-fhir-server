@@ -3,25 +3,26 @@
 var modelsCommon = require('./models-common');
 
 var library = modelsCommon({
+    sectionName: 'allergies',
     patientRefKey: 'patient'
 });
 
 exports.create = function (bbr, resource, callback) {
-    library.create(bbr, 'allergies', resource, callback);
+    library.create(bbr, resource, callback);
 };
 
 exports.search = function (bbr, params, callback) {
-    library.search(bbr, 'allergies', params, callback);
+    library.search(bbr, params, callback);
 };
 
 exports.read = function (bbr, id, callback) {
-    library.read(bbr, 'allergies', id, callback);
+    library.read(bbr, id, callback);
 };
 
 exports.update = function (bbr, resource, callback) {
-    library.update(bbr, 'allergies', resource, callback);
+    library.update(bbr, resource, callback);
 };
 
 exports.delete = function (bbr, id, callback) {
-    library.delete(bbr, 'allergies', id, callback);
+    library.delete(bbr, id, callback);
 };

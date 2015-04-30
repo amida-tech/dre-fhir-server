@@ -2,24 +2,27 @@
 
 var modelsCommon = require('./models-common');
 
-var library = modelsCommon();
+var library = modelsCommon({
+    sectionName: 'vitals',
+    patientRefKey: 'subject'
+});
 
 exports.create = function (bbr, resource, callback) {
-    library.create(bbr, 'vitals', resource, callback);
+    library.create(bbr, resource, callback);
 };
 
 exports.search = function (bbr, params, callback) {
-    library.search(bbr, 'vitals', params, callback);
+    library.search(bbr, params, callback);
 };
 
 exports.read = function (bbr, id, callback) {
-    library.read(bbr, 'vitals', id, callback);
+    library.read(bbr, id, callback);
 };
 
 exports.update = function (bbr, resource, callback) {
-    library.update(bbr, 'vitals', resource, callback);
+    library.update(bbr, resource, callback);
 };
 
 exports.delete = function (bbr, id, callback) {
-    library.delete(bbr, 'vitals', id, callback);
+    library.delete(bbr, id, callback);
 };
