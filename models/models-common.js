@@ -19,9 +19,13 @@ module.exports = function (options) {
     return result;
 };
 
+methods.resourceToModelEntry = function (resource) {
+    return bbFhir.resourceToModelEntry(resource, this.sectionName);
+};
+
 methods.create = function (bbr, resource, callback) {
     var sectionName = this.sectionName;
-    var entry = bbFhir.resourceToModelEntry(resource, sectionName);
+    var entry = this.resourceToModelEntry(resource);
     if (!entry) {
         var msg = util.format('%s resource appears to be invalid', resource.resourceType);
         callback(new Error(msg));
@@ -192,7 +196,7 @@ methods.read = function (bbr, id, callback) {
 
 methods.update = function (bbr, resource, callback) {
     var sectionName = this.sectionName;
-    var entry = bbFhir.resourceToModelEntry(resource, sectionName);
+    var entry = this.resourceToModelEntry(resource);
     if (!entry) {
         var msg = util.format('%s resource appears to be invalid', resource.resourceType);
         callback(new Error(msg));
