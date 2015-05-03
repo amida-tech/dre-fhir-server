@@ -4,7 +4,7 @@ var express = require('express');
 var bp = require('body-parser');
 var _ = require('lodash');
 
-var fhirRouter = require('../routes/fhir');
+var routerFactory = require('../routes/routerFactory');
 var defaultConfig = require('../config/config.json');
 
 var catchAllErrHandler = require('../middleware/catchAllErrHandler');
@@ -37,7 +37,7 @@ module.exports = function (overrideConfig) {
     }));
 
     app.use(dbmw(config));
-    app.use(config.server.fhirUrl, fhirRouter(config.conformance));
+    app.use(config.server.fhirUrl, routerFactory(config.conformance));
 
     app.get('/config', function (req, res) {
         res.status(200);

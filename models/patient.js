@@ -92,7 +92,7 @@ var paramsToBBRParams = (function () {
 
 exports.search = function (bbr, params, callback) {
     var bbrParams = params ? paramsToBBRParams(params) : {};
-    bbr.getMultiSection('demographics', bbrParams, function (err, results) {
+    bbr.getMultiSection('demographics', bbrParams, false, function (err, results) {
         if (err) {
             callback(err);
         } else {

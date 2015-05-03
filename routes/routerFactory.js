@@ -2,34 +2,39 @@
 
 var express = require('express');
 var path = require('path');
+var util = require('util');
 
 var fpp = require('../middleware/fhir-param-parser');
 
 module.exports = (function () {
-    var interactionToRoute = {
-        'read': [{
-            'path': '/Patient/:id',
-            'method': 'get'
-        }],
-        'update': [{
-            'path': '/Patient/:id',
-            'method': 'put'
-        }],
-        'delete': [{
-            'path': '/Patient/:id',
-            'method': 'delete'
-        }],
-        'create': [{
-            'path': '/Patient',
-            'method': 'post'
-        }],
-        'search-type': [{
-            'path': '/Patient',
-            'method': 'get'
-        }, {
-            'path': '/Patient/_search',
-            'method': 'post'
-        }]
+    var interactionToRoute = function (resourceType) {
+        var typePath = util.format('/%s', resourceType);
+        var instancePath = util.format('/%s/:id', resourceType);
+        return {
+            'read': [{
+                'path': instancePath,
+                'method': 'get'
+            }],
+            'update': [{
+                'path': instancePath,
+                'method': 'put'
+            }],
+            'delete': [{
+                'path': instancePath,
+                'method': 'delete'
+            }],
+            'create': [{
+                'path': typePath,
+                'method': 'post'
+            }],
+            'search-type': [{
+                'path': typePath,
+                'method': 'get'
+            }, {
+                'path': util.format('/%s/_search', resourceType),
+                'method': 'post'
+            }]
+        };
     };
 
     var interactionImplementation = {
@@ -83,7 +88,7 @@ module.exports = (function () {
             };
 
         },
-        'create': function (model) {
+        'create': function (model, resourceType) {
             return function (req, res) {
                 var patient = req.body;
                 var c = req.app.get('connection');
@@ -92,7 +97,7 @@ module.exports = (function () {
                         res.status(400);
                         res.send(err);
                     } else {
-                        var location = [req.baseUrl, 'Patient', id, '_history', '1'].join('/');
+                        var location = [req.baseUrl, resourceType, id, '_history', '1'].join('/');
                         res.status(201);
                         res.location(location);
                         res.header('ETag', '1');
@@ -101,7 +106,7 @@ module.exports = (function () {
                 });
             };
         },
-        'search-type': function (model, searchParam) {
+        'search-type': function (model, resourceType, searchParam) {
             return [
                 fpp(searchParam),
                 function (req, res) {
@@ -132,15 +137,15 @@ module.exports = (function () {
         var rest = conformance.rest[0];
         rest.resource.forEach(function (resource) {
             var resourceType = resource.type;
-            var modelName = resourceType.toLowerCase();
+            var modelName = resourceType.charAt(0).toLowerCase() + resourceType.substring(1, resourceType.length);
             var modelPath = path.join('..', 'models', modelName);
             var model = require(modelPath);
             var searchParam = resource.searchParam;
 
             resource.interaction.forEach(function (interaction) {
                 var code = interaction.code;
-                var implementation = interactionImplementation[code](model, searchParam);
-                var routeInfos = interactionToRoute[code];
+                var implementation = interactionImplementation[code](model, resourceType, searchParam);
+                var routeInfos = interactionToRoute(resourceType)[code];
                 routeInfos.forEach(function (routeInfo) {
                     var path = routeInfo.path;
                     var method = routeInfo.method;
