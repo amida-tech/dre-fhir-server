@@ -2,16 +2,23 @@
 
 var request = require('supertest');
 var chai = require('chai');
+var _ = require('lodash');
 
 var expect = chai.expect;
 var fhirApp = require('../../config/app');
 var samples = require('../samples/allergyIntolerance-samples');
 var patientSamples = require('../samples/patient-samples')();
+var sharedMod = require('./shared');
 
 describe('routes allergyIntolerance', function () {
     var app;
     var server;
     var api;
+    var shared;
+    var sharedPatient;
+
+    var samplesSet0 = samples.set0();
+    var samplesSet1 = samples.set1();
 
     before(function (done) {
         app = fhirApp({
@@ -21,64 +28,42 @@ describe('routes allergyIntolerance', function () {
         });
         server = app.listen(3001, done);
         api = request.agent(app);
+        shared = sharedMod({
+            app: app,
+            server: server,
+            api: api,
+            dbName: "fhirallergyintoleranceapi",
+            resourceType: 'AllergyIntolerance'
+        });
+        sharedPatient = sharedMod({
+            app: app,
+            server: server,
+            api: api,
+            dbName: "fhirallergyintoleranceapi",
+            resourceType: 'Patient'
+        });
     });
 
     it('check config (inits database as well)', function (done) {
-        api.get('/config')
-            .expect(200)
-            .end(function (err, res) {
-                if (err) {
-                    done(err);
-                } else {
-                    expect(res.body.db.dbName).to.equal("fhirallergyintoleranceapi");
-                    done();
-                }
-            });
+        shared.getConfig(done);
     });
 
     it('clear database', function (done) {
-        var c = app.get('connection');
-        c.clearDatabase(done);
+        shared.clearDatabase(done);
     });
-
-    var samplesSet0 = samples.set0();
-    var samplesSet1 = samples.set1();
 
     it('create with patient missing', function (done) {
-        var sample = samplesSet0[0];
-
-        api.post('/fhir/AllergyIntolerance')
-            .send(sample)
-            .expect(400)
-            .end(done);
+        shared.failCreate(samplesSet0[0], done);
     });
 
-    var createPatientIt = function (index) {
-        var patientSample = patientSamples[index];
-
+    var createPatient = function (index) {
         return function (done) {
-            api.post('/fhir/Patient')
-                .send(patientSample)
-                .expect(201)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var location = res.header.location;
-                        var p = location.split('/');
-                        expect(p).to.have.length(6);
-                        var id = p[3];
-                        p[3] = '';
-                        expect(p).to.deep.equal(['', 'fhir', 'Patient', '', '_history', '1']);
-                        patientSample.id = id;
-                        done();
-                    }
-                });
+            sharedPatient.create(patientSamples[index], done);
         };
     };
 
     for (var i = 0; i < 2; ++i) {
-        it('create patient ' + i, createPatientIt(i));
+        it('create patient ' + i, createPatient(i));
     }
 
     it('assign patients to samples', function () {
