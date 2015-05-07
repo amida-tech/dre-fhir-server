@@ -33,7 +33,10 @@ describe('routes allergyIntolerance', function () {
             server: server,
             api: api,
             dbName: "fhirallergyintoleranceapi",
-            resourceType: 'AllergyIntolerance'
+            resourceType: 'AllergyIntolerance',
+            readTransform: function (resource) {
+                delete resource.patient.display;
+            }
         });
         sharedPatient = sharedMod({
             app: app,
@@ -77,32 +80,9 @@ describe('routes allergyIntolerance', function () {
         });
     });
 
-    var entryMapById = {};
-    var entryIds = [];
-
     var createIt = function (samplesSet, index) {
-        var sample = samplesSet[index];
-
         return function (done) {
-            api.post('/fhir/AllergyIntolerance')
-                .send(sample)
-                .expect(201)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var location = res.header.location;
-                        var p = location.split('/');
-                        expect(p).to.have.length(6);
-                        var id = p[3];
-                        p[3] = '';
-                        expect(p).to.deep.equal(['', 'fhir', 'AllergyIntolerance', '', '_history', '1']);
-                        sample.id = id;
-                        entryMapById[id] = sample;
-                        entryIds.push(id);
-                        done();
-                    }
-                });
+            shared.create(samplesSet[index], done);
         };
     };
 
@@ -116,25 +96,7 @@ describe('routes allergyIntolerance', function () {
 
     var searchIt = function (count, isPost, query) {
         return function (done) {
-            var request = isPost ? api.post('/fhir/AllergyIntolerance/_search') : api.get('/fhir/AllergyIntolerance');
-            if (query) {
-                request.query(query);
-            }
-            request.expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var bundle = res.body;
-                        expect(bundle.entry).to.have.length(count);
-                        for (var j = 0; j < count; ++j) {
-                            var dbVital = bundle.entry[j].resource;
-                            delete dbVital.patient.display;
-                            expect(dbVital).to.deep.equal(entryMapById[dbVital.id]);
-                        }
-                        done();
-                    }
-                });
+            shared.search(count, isPost, query, done);
         };
     };
 
@@ -145,20 +107,7 @@ describe('routes allergyIntolerance', function () {
     var readIt = function (samplesSet, index) {
         return function (done) {
             var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.get('/fhir/AllergyIntolerance/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var resource = res.body;
-                        delete resource.patient.display;
-                        expect(resource).to.deep.equal(sample);
-                        done();
-                    }
-                });
+            shared.read(sample, done);
         };
     };
 
@@ -178,38 +127,14 @@ describe('routes allergyIntolerance', function () {
     var updateIt = function (samplesSet, index) {
         return function (done) {
             var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.put('/fhir/AllergyIntolerance/' + id)
-                .send(sample)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        done();
-                    }
-                });
+            shared.update(sample, done);
         };
     };
 
     var notReadIt = function (samplesSet, index) {
         return function (done) {
             var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.get('/fhir/AllergyIntolerance/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var resource = res.body;
-                        delete resource.patient.display;
-                        expect(resource).to.not.deep.equal(sample);
-                        done();
-                    }
-                });
+            shared.readNegative(sample, done);
         };
     };
 
@@ -223,17 +148,7 @@ describe('routes allergyIntolerance', function () {
     var deleteIt = function (samplesSet, index) {
         return function (done) {
             var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.delete('/fhir/AllergyIntolerance/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        done();
-                    }
-                });
+            shared.delete(sample, done);
         };
     };
 
