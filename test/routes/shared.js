@@ -2,7 +2,6 @@
 
 var util = require('util');
 
-var request = require('supertest');
 var chai = require('chai');
 
 var expect = chai.expect;
@@ -12,13 +11,11 @@ var methods = {};
 module.exports = function (options) {
     var result = Object.create(methods);
     result.app = options.app;
-    result.server = options.server;
-    result.api = options.api;
-    result.dbName = options.dbName;
     result.resourceType = options.resourceType;
-    result.entryIds = options.entryIds;
+
     result.readTransform = options.readTransform;
 
+    result.api = result.app.api();
     result.entryMapById = {};
     result.entryIds = [];
     return result;
@@ -30,14 +27,9 @@ methods.getConfig = function (done) {
         .expect(200)
         .expect(function (res) {
             var dbName = self.dbName;
-            expect(res.body.db.dbName).to.equal(dbName);
+            expect(res.body.db.dbName).to.equal(self.app.dbName);
         })
         .end(done);
-};
-
-methods.clearDatabase = function (done) {
-    var c = this.app.get('connection');
-    c.clearDatabase(done);
 };
 
 methods.failCreate = function (sample, done) {
