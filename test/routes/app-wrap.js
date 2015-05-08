@@ -30,12 +30,6 @@ var base = {
 	},
 	api: function() {
 		return request.agent(this.app);
-	},
-	genMethod: function (methodName) {
-		var self = this;
-		return function(done) {
-			self[methodName](done);
-		}
 	}
 };
 

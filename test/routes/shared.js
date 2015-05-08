@@ -32,7 +32,7 @@ methods.getConfig = function (done) {
         .end(done);
 };
 
-methods.failCreate = function (sample, done) {
+methods.createNegative = function (sample, done) {
     var path = util.format('/fhir/%s', this.resourceType);
     this.api.post(path)
         .send(sample)
@@ -109,20 +109,12 @@ methods.update = function (sample, done) {
         .end(done);
 };
 
-methods.search = function (expectedCount, usePost, query, done) {
+methods._search = function (req, expectedCount, query, done) {
     var self = this;
-    var request;
-    if (usePost) {
-        var postPath = util.format('/fhir/%s/_search', this.resourceType);
-        request = this.api.post(postPath);
-    } else {
-        var getPath = util.format('/fhir/%s', this.resourceType);
-        request = this.api.get(getPath);
-    }
     if (query) {
-        request.query(query);
+        req.query(query);
     }
-    request.expect(200)
+    req.expect(200)
         .expect(function (res) {
             var bundle = res.body;
             expect(bundle.entry).to.have.length(expectedCount);
@@ -133,4 +125,16 @@ methods.search = function (expectedCount, usePost, query, done) {
             }
         })
         .end(done);
+};
+
+methods.searchByPost = function (expectedCount, query, done) {
+    var path = util.format('/fhir/%s/_search', this.resourceType);
+    var req = this.api.post(path);
+    this._search(req, expectedCount, query, done);
+};
+
+methods.search = function (expectedCount, query, done) {
+    var path = util.format('/fhir/%s', this.resourceType);
+    var req = this.api.get(path);
+    this._search(req, expectedCount, query, done);
 };

@@ -2,34 +2,17 @@
 
 var methods = {};
 
-module.exports = function (sampleSets) {
+module.exports = function (shared, sampleSets) {
     var result = Object.create(methods);
     result.sampleSets = sampleSets;
+    result.shared = shared;
     return result;
-};
-
-methods.initialize = function (shared) {
-    this.shared = shared;
 };
 
 methods.config = function() {
 	var self = this;
 	return function (done) {
     	self.shared.getConfig(done);
-	};
-};
-
-methods.clearDatabase = function() {
-	var self = this;
-	return function (done) {
-        self.shared.clearDatabase(done);
-    };
-};
-
-methods.cleanUp = function() {
-	var self = this;
-	return function (done) {
-		self.shared.cleanUp(done);
 	};
 };
 
@@ -54,7 +37,7 @@ methods.create = function (setIndex, index) {
 };
 
 methods.createNegative = function (setIndex, index) {
-	return this.operation('failCreate', setIndex, index);
+	return this.operation('createNegative', setIndex, index);
 };
 
 methods.delete = function(setIndex, index) {
@@ -76,13 +59,13 @@ methods.readNegative = function(setIndex, index) {
 methods.searchByPost = function(count, query) {
 	var self = this;
     return function (done) {
-        self.shared.search(count, true, query, done);
+        self.shared.searchByPost(count, query, done);
     };
 };
 
 methods.search = function(count, query) {
 	var self = this;
     return function (done) {
-        self.shared.search(count, false, query, done);
+        self.shared.search(count, query, done);
     };
 };

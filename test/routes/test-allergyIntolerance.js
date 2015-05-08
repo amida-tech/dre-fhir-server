@@ -12,6 +12,13 @@ var sharedMod = require('./shared');
 var itGen = require('./it-generator');
 var appWrap = require('./app-wrap');
 
+var itFn = function(obj, fn, args) {
+    return function(done) {
+        var fnArgs = args ? args.concat(done) : [done];
+        fn.apply(obj, fnArgs);
+    }
+}
+
 describe('routes allergyIntolerance', function () {
     var app = appWrap.instance('fhirallergyintoleranceapi');
     var shared = sharedMod({
@@ -29,17 +36,14 @@ describe('routes allergyIntolerance', function () {
     var samplesSet0 = samples.set0();
     var samplesSet1 = samples.set1();
 
-    var itSupply = itGen([samplesSet0, samplesSet1]);
-    var patientItSupply = itGen([patientSamples]); 
+    var itSupply = itGen(shared, [samplesSet0, samplesSet1]);
+    var patientItSupply = itGen(sharedPatient, [patientSamples]); 
 
-    itSupply.initialize(shared);
-    patientItSupply.initialize(sharedPatient);
-
-    before(app.genMethod('start'));
+    before(itFn(app, app.start));
 
     it('check config (inits database as well)', itSupply.config());
 
-    it('clear database', app.genMethod('cleardb'));
+    it('clear database', itFn(app, app.cleardb));
 
     it('create with patient missing', itSupply.createNegative(0, 0));
 
@@ -98,5 +102,5 @@ describe('routes allergyIntolerance', function () {
 
     it('search (no param)', itSupply.search(n0 + n1));
 
-    after(app.genMethod('cleanUp'));
+    after(itFn(app, app.cleanUp));
 });
