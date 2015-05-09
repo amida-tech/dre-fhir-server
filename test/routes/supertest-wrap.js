@@ -6,33 +6,34 @@ var chai = require('chai');
 
 var expect = chai.expect;
 
-var methods = {};
+var base = {};
 
 module.exports = function (options) {
-    var result = Object.create(methods);
-    result.app = options.app;
-    result.resourceType = options.resourceType;
+    var result = Object.create(base);
 
+    result.appWrap = options.appWrap;
+    result.resourceType = options.resourceType;
     result.readTransform = options.readTransform;
 
-    result.api = result.app.api();
+    result.api = result.appWrap.api();
     result.entryMapById = {};
     result.entryIds = [];
+
     return result;
 };
 
-methods.getConfig = function (done) {
+base.config = function (done) {
     var self = this;
     this.api.get('/config')
         .expect(200)
         .expect(function (res) {
             var dbName = self.dbName;
-            expect(res.body.db.dbName).to.equal(self.app.dbName);
+            expect(res.body.db.dbName).to.equal(self.appWrap.dbName);
         })
         .end(done);
 };
 
-methods.createNegative = function (sample, done) {
+base.createNegative = function (sample, done) {
     var path = util.format('/fhir/%s', this.resourceType);
     this.api.post(path)
         .send(sample)
@@ -40,7 +41,7 @@ methods.createNegative = function (sample, done) {
         .end(done);
 };
 
-methods.create = function (sample, done) {
+base.create = function (sample, done) {
     var self = this;
     var path = util.format('/fhir/%s', this.resourceType);
     this.api.post(path)
@@ -64,7 +65,7 @@ methods.create = function (sample, done) {
         .end(done);
 };
 
-methods.read = function (sample, done) {
+base.read = function (sample, done) {
     var self = this;
     var id = sample.id;
     var path = util.format('/fhir/%s/%s', this.resourceType, id);
@@ -78,7 +79,7 @@ methods.read = function (sample, done) {
         .end(done);
 };
 
-methods.readNegative = function (sample, done) {
+base.readNegative = function (sample, done) {
     var self = this;
     var id = sample.id;
     var path = util.format('/fhir/%s/%s', this.resourceType, id);
@@ -92,15 +93,22 @@ methods.readNegative = function (sample, done) {
         .end(done);
 };
 
-methods.delete = function (sample, done) {
+base.delete = function (sample, done) {
+    var self = this;
     var id = sample.id;
     var path = util.format('/fhir/%s/%s', this.resourceType, id);
     this.api.delete(path)
         .expect(200)
+        .expect(function (res) {
+            var index = self.entryIds.indexOf(id);
+            expect(index).to.be.above(-1);
+            self.entryIds.splice(index, 1);
+            delete self.entryMapById[id];
+        })
         .end(done);
 };
 
-methods.update = function (sample, done) {
+base.update = function (sample, done) {
     var id = sample.id;
     var path = util.format('/fhir/%s/%s', this.resourceType, id);
     this.api.put(path)
@@ -109,7 +117,7 @@ methods.update = function (sample, done) {
         .end(done);
 };
 
-methods._search = function (req, expectedCount, query, done) {
+base._search = function (req, expectedCount, query, done) {
     var self = this;
     if (query) {
         req.query(query);
@@ -119,21 +127,21 @@ methods._search = function (req, expectedCount, query, done) {
             var bundle = res.body;
             expect(bundle.entry).to.have.length(expectedCount);
             for (var j = 0; j < expectedCount; ++j) {
-                var dbVital = bundle.entry[j].resource;
-                self.readTransform(dbVital);
-                expect(dbVital).to.deep.equal(self.entryMapById[dbVital.id]);
+                var serverResource = bundle.entry[j].resource;
+                self.readTransform(serverResource);
+                expect(serverResource).to.deep.equal(self.entryMapById[serverResource.id]);
             }
         })
         .end(done);
 };
 
-methods.searchByPost = function (expectedCount, query, done) {
+base.searchByPost = function (expectedCount, query, done) {
     var path = util.format('/fhir/%s/_search', this.resourceType);
     var req = this.api.post(path);
     this._search(req, expectedCount, query, done);
 };
 
-methods.search = function (expectedCount, query, done) {
+base.search = function (expectedCount, query, done) {
     var path = util.format('/fhir/%s', this.resourceType);
     var req = this.api.get(path);
     this._search(req, expectedCount, query, done);

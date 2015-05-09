@@ -2,11 +2,12 @@
 
 exports.generateTestItem = function (obj, fn, args) {
     return function (done) {
-        if (args && !Array.isArray(args)) {
-            args = [args];
+        if (args) {
+            args = Array.isArray(args) ? args.concat([done]) : [args, done];
+        } else {
+            args = [done];
         }
-        var fnArgs = args ? args.concat([done]) : [done];
-        fn.apply(obj, fnArgs);
+        fn.apply(obj, args);
     };
 };
 
