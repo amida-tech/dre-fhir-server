@@ -11,13 +11,18 @@ var common = require('./common');
 
 var fn = common.generateTestItem;
 
-describe('routes allergyIntolerance', function () {
-    var appw = appWrap.instance('fhirallergyintoleranceapi');
+var resourceType = 'AllergyIntolerance';
+var testTitle = util.format('%s routes', resourceType);
+var patientProperty = 'patient';
+
+describe(testTitle, function () {
+    var dbName = util.format('fhir%sapi', resourceType.toLowerCase());
+    var appw = appWrap.instance(dbName);
     var r = supertestWrap({
         appWrap: appw,
-        resourceType: 'AllergyIntolerance',
+        resourceType: resourceType,
         readTransform: function (resource) {
-            delete resource.patient.display;
+            delete resource[patientProperty].display;
         }
     });
     var pt = supertestWrap({
@@ -41,7 +46,7 @@ describe('routes allergyIntolerance', function () {
     }, this);
 
     it('assign patient refs to all resources', function () {
-        common.putPatientRefs(resourceSets, patientSamples, 'patient');
+        common.putPatientRefs(resourceSets, patientSamples, patientProperty);
     });
 
     _.range(2).forEach(function (i) {
