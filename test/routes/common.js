@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('lodash');
+
 exports.generateTestItem = function (obj, fn, args) {
     return function (done) {
         if (args) {
@@ -18,6 +20,18 @@ exports.putPatientRefs = function (resourceSets, patients, patientProperty) {
             resource[patientProperty] = {
                 reference: reference
             };
+        });
+    });
+};
+
+exports.putPanelElementRefs = function (resourceSets) {
+    resourceSets.forEach(function (resources) {
+        _.range(resources.panelStart, resources.length).forEach(function (index) {
+            var resource = resources[index];
+            resource.related.forEach(function (related) {
+                var relatedIndex = related.target.reference;
+                related.target.reference = resources[relatedIndex].id;
+            });
         });
     });
 };

@@ -1,298 +1,107 @@
 'use strict';
 
-var request = require('supertest');
-var chai = require('chai');
+var util = require('util');
+var _ = require('lodash');
 
-var expect = chai.expect;
-var fhirApp = require('../../config/app');
 var samples = require('../samples/observation-vital-samples');
 var patientSamples = require('../samples/patient-samples')();
+var supertestWrap = require('./supertest-wrap');
+var appWrap = require('./app-wrap');
+var common = require('./common');
 
-describe('routes observation vital', function () {
-    var app;
-    var server;
-    var api;
+var fn = common.generateTestItem;
 
-    before(function (done) {
-        app = fhirApp({
-            db: {
-                "dbName": "fhirobservationvitalapi"
-            }
-        });
-        server = app.listen(3001, done);
-        api = request.agent(app);
+var resourceType = 'Observation';
+var testTitle = util.format('%s (vitals) routes', resourceType);
+var patientProperty = 'subject';
+
+describe(testTitle, function () {
+    var dbName = util.format('fhir%sapi', resourceType.toLowerCase());
+    var appw = appWrap.instance(dbName);
+    var r = supertestWrap({
+        appWrap: appw,
+        resourceType: resourceType,
+        readTransform: function (resource) {
+            delete resource[patientProperty].display;
+        }
+    });
+    var pt = supertestWrap({
+        appWrap: appw,
+        resourceType: 'Patient'
     });
 
-    it('check config (inits database as well)', function (done) {
-        api.get('/config')
-            .expect(200)
-            .end(function (err, res) {
-                if (err) {
-                    done(err);
-                } else {
-                    expect(res.body.db.dbName).to.equal("fhirobservationvitalapi");
-                    done();
-                }
-            });
+    var resourceSets = [samples.set0(), samples.set1()];
+    resourceSets[0].panelStart = samples.panelStart0;
+    resourceSets[1].panelStart = samples.panelStart1;
+
+    before(fn(appw, appw.start));
+
+    it('check config (inits database as well)', fn(r, r.config));
+
+    it('clear database', fn(appw, appw.cleardb));
+
+    it('fail to create resource 0 for patient 0 with patient ref missing', fn(r, r.createNegative, resourceSets[0][0]));
+
+    _.range(2).forEach(function (index) {
+        var title = util.format('create patient %s', index);
+        it(title, fn(pt, pt.create, [patientSamples[index]]));
+    }, this);
+
+    it('assign patient refs to all resources', function () {
+        common.putPatientRefs(resourceSets, patientSamples, patientProperty);
     });
 
-    it('clear database', function (done) {
-        var c = app.get('connection');
-        c.clearDatabase(done);
+    _.range(2).forEach(function (i) {
+        _.range(resourceSets[i].panelStart).forEach(function (j) {
+            var title = util.format('create resource %s for patient %s', j, i);
+            it(title, fn(r, r.create, resourceSets[i][j]));
+        }, this);
+    }, this);
+
+    it('populate resource panel element ids', function () {
+        common.putPanelElementRefs(resourceSets);
     });
 
-    var samplesSet0 = samples.set0();
-    var samplesSet1 = samples.set1();
+    _.range(2).forEach(function (i) {
+        _.range(resourceSets[i].panelStart, resourceSets[i].length).forEach(function (j) {
+            var title = util.format('create resource (panel) %s for patient %s', j, i);
+            it(title, fn(r, r.create, resourceSets[i][j]));
+        }, this);
+    }, this);
 
-    it('create with patient missing', function (done) {
-        var sample = samplesSet0[0];
+    var n = resourceSets[0].length + resourceSets[1].length;
+    it('search all using get', fn(r, r.search, [n, {}]));
+    it('search all using post', fn(r, r.searchByPost, [n, {}]));
 
-        api.post('/fhir/Observation')
-            .send(sample)
-            .expect(400)
-            .end(done);
+    _.range(2).forEach(function (i) {
+        _.range(resourceSets[i].length).forEach(function (j) {
+            var title = util.format('read resource %s for patient %s', j, i);
+            it(title, fn(r, r.read, resourceSets[i][j]));
+        }, this);
+    }, this);
+
+    it('update local resource 0 for patient 0', function () {
+        resourceSets[0][0].valueQuantity.value += 1;
     });
 
-    var createPatientIt = function (index) {
-        var patientSample = patientSamples[index];
-
-        return function (done) {
-            api.post('/fhir/Patient')
-                .send(patientSample)
-                .expect(201)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var location = res.header.location;
-                        var p = location.split('/');
-                        expect(p).to.have.length(6);
-                        var id = p[3];
-                        p[3] = '';
-                        expect(p).to.deep.equal(['', 'fhir', 'Patient', '', '_history', '1']);
-                        patientSample.id = id;
-                        done();
-                    }
-                });
-        };
-    };
-
-    for (var i = 0; i < 2; ++i) {
-        it('create patient ' + i, createPatientIt(i));
-    }
-
-    it('assign patients to samples', function () {
-        [samplesSet0, samplesSet1].forEach(function (samplesSet, index) {
-            var reference = patientSamples[index].id;
-            samplesSet.forEach(function (sample) {
-                sample.subject = {
-                    reference: reference
-                };
-            });
-        });
+    it('update local resource 0 for patient 1', function () {
+        resourceSets[1][0].valueQuantity.value += 1;
     });
 
-    var entryMapById = {};
-    var entryIds = [];
+    _.range(2).forEach(function (i) {
+        var ptTitle = util.format(' for patient %s', i);
+        it('detect resource 0 not on server' + ptTitle, fn(r, r.readNegative, resourceSets[i][0]));
+        it('update resource 0' + ptTitle, fn(r, r.update, resourceSets[i][0]));
+        it('read resource 0' + ptTitle, fn(r, r.read, resourceSets[i][0]));
+    }, this);
 
-    var createIt = function (samplesSet, index) {
-        var sample = samplesSet[index];
+    var n0 = resourceSets[0].length - 1;
+    var n1 = resourceSets[1].length - 1;
 
-        return function (done) {
-            api.post('/fhir/Observation')
-                .send(sample)
-                .expect(201)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var location = res.header.location;
-                        var p = location.split('/');
-                        expect(p).to.have.length(6);
-                        var id = p[3];
-                        p[3] = '';
-                        expect(p).to.deep.equal(['', 'fhir', 'Observation', '', '_history', '1']);
-                        sample.id = id;
-                        entryMapById[id] = sample;
-                        entryIds.push(id);
-                        done();
-                    }
-                });
-        };
-    };
+    it('delete last resource for patient 0', fn(r, r.delete, resourceSets[0][n0]));
+    it('delete last resource for patient 1', fn(r, r.delete, resourceSets[1][n1]));
 
-    var populatePanelIt = function (samplesSet, index, offset) {
-        return function () {
-            var sample = samplesSet[index];
-            sample.related.forEach(function (related) {
-                var index = related.target.reference;
-                related.target.reference = entryIds[index + offset];
-            });
-        };
-    };
+    it('search all using get', fn(r, r.search, [n0 + n1, {}]));
 
-    for (var j0 = 0; j0 < samples.panelStart0; ++j0) {
-        it('create for patient-0 ' + j0, createIt(samplesSet0, j0));
-    }
-
-    for (var jj0 = samples.panelStart0; jj0 < samplesSet0.length; ++jj0) {
-        it('populate panel for patient-0 ' + jj0, populatePanelIt(samplesSet0, jj0, 0));
-        it('create panel for patient-0 ' + jj0, createIt(samplesSet0, jj0));
-    }
-
-    for (var j1 = 0; j1 < samples.panelStart1; ++j1) {
-        it('create for patient-1 ' + j1, createIt(samplesSet1, j1));
-    }
-
-    for (var jj1 = samples.panelStart1; jj1 < samplesSet1.length; ++jj1) {
-        it('populate panel for patient-1 ' + jj1, populatePanelIt(samplesSet1, jj1, samplesSet0.length));
-        it('create for patient-1 ' + jj1, createIt(samplesSet1, jj1));
-    }
-
-    var searchIt = function (count, isPost, query) {
-        return function (done) {
-            var request = isPost ? api.post('/fhir/Observation/_search') : api.get('/fhir/Observation');
-            if (query) {
-                request.query(query);
-            }
-            request.expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var bundle = res.body;
-                        expect(bundle.entry).to.have.length(count);
-                        for (var j = 0; j < count; ++j) {
-                            var dbVital = bundle.entry[j].resource;
-                            delete dbVital.subject.display;
-                            expect(dbVital).to.deep.equal(entryMapById[dbVital.id]);
-                        }
-                        done();
-                    }
-                });
-        };
-    };
-
-    var n = samplesSet0.length + samplesSet1.length;
-    it('search (get - no param)', searchIt(n, false));
-    it('search (post - no param)', searchIt(n, true));
-
-    var readIt = function (samplesSet, index) {
-        return function (done) {
-            var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.get('/fhir/Observation/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var resource = res.body;
-                        delete resource.subject.display;
-                        expect(resource).to.deep.equal(sample);
-                        done();
-                    }
-                });
-        };
-    };
-
-    for (var k0 = 0; k0 < samplesSet0.length; ++k0) {
-        it('read for patient-0 ' + k0, readIt(samplesSet0, k0));
-    }
-
-    for (var k1 = 0; k1 < samplesSet0.length; ++k1) {
-        it('read for patient-1 ' + k1, readIt(samplesSet1, k1));
-    }
-
-    it('update values', function () {
-        samplesSet0[0].valueQuantity.value += 1;
-        samplesSet1[0].valueQuantity.value += 1;
-    });
-
-    var updateIt = function (samplesSet, index) {
-        return function (done) {
-            var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.put('/fhir/Observation/' + id)
-                .send(sample)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        done();
-                    }
-                });
-        };
-    };
-
-    var notReadIt = function (samplesSet, index) {
-        return function (done) {
-            var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.get('/fhir/Observation/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var resource = res.body;
-                        delete resource.subject.display;
-                        expect(resource).to.not.deep.equal(sample);
-                        done();
-                    }
-                });
-        };
-    };
-
-    it('detect updated not equal db for patient-0', notReadIt(samplesSet0, 0));
-    it('update for patient-0', updateIt(samplesSet0, 0));
-    it('read for patient-0', readIt(samplesSet0, 0));
-    it('detect updated not equal db for patient-1', notReadIt(samplesSet1, 0));
-    it('update for patient-1', updateIt(samplesSet1, 0));
-    it('read for patient-1', readIt(samplesSet1, 0));
-
-    var deleteIt = function (samplesSet, index) {
-        return function (done) {
-            var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.delete('/fhir/Observation/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        done();
-                    }
-                });
-        };
-    };
-
-    var n0 = samplesSet0.length - 1;
-    var n1 = samplesSet1.length - 1;
-
-    it('delete last for patient-0', deleteIt(samplesSet0, n0));
-    it('delete last for patient-1', deleteIt(samplesSet1, n1));
-
-    it('search (no param)', searchIt(n0 + n1));
-
-    it('clear database', function (done) {
-        var c = app.get('connection');
-        c.clearDatabase(done);
-    });
-
-    after(function (done) {
-        var c = app.get('connection');
-        c.disconnect(function (err) {
-            if (err) {
-                done(err);
-            } else {
-                server.close(done);
-            }
-        });
-    });
+    after(fn(appw, appw.cleanUp));
 });
