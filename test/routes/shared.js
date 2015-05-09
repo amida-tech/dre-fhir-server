@@ -138,3 +138,23 @@ methods.search = function (expectedCount, query, done) {
     var req = this.api.get(path);
     this._search(req, expectedCount, query, done);
 };
+
+var sampleSetAdapter = (function () {
+    var result = {};
+
+    ['create', 'createNegative', 'delete', 'update', 'read', 'readNegative'].forEach(function (op) {
+        result[op] = function (setIndex, index, done) {
+            var sample = this.sampleSets[setIndex][index];
+            this.shared[op](sample, done);
+        };
+    });
+
+    return result;
+})();
+
+methods.sampleSetAdapter = function (sampleSets) {
+    var result = Object.create(sampleSetAdapter);
+    result.sampleSets = sampleSets;
+    result.shared = this;
+    return result;
+};
