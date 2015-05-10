@@ -9,6 +9,7 @@ var appWrap = require('./app-wrap');
 var common = require('./common');
 
 var fn = common.generateTestItem;
+var fnId = common.searchById;
 
 var resourceType = 'Patient';
 var testTitle = util.format('%s routes', resourceType);
@@ -48,9 +49,7 @@ describe(testTitle, function () {
 
     _.range(n).forEach(function (i) {
         var title = util.format('search by id resource %s', i);
-        it(title, fn(r, r.search, [n, {
-            _id: resources[i].id
-        }]));
+        it(title, fnId(r, r.search, resources[i]));
     }, this);
 
     it('search not existing family', fn(r, r.search, [0, {

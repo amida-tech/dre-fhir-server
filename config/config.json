@@ -57,7 +57,7 @@
 					"name": "_id",
 					"type": "string"
 				}, {
-					"name": "patient",
+					"name": "subject",
 					"type": "reference"
 				}]
 			}, {
@@ -77,7 +77,7 @@
 					"name": "_id",
 					"type": "string"
 				}, {
-					"name": "patient",
+					"name": "subject",
 					"type": "reference"
 				}]
 			}, {

@@ -13,6 +13,24 @@ exports.generateTestItem = function (obj, fn, args) {
     };
 };
 
+exports.searchById = function (obj, fn, resource) {
+    return function (done) {
+        var args = [1, {
+            _id: resource.id
+        }, done];
+        fn.apply(obj, args);
+    };
+};
+
+exports.searchByPatient = function (obj, fn, patient, patientProperty, count) {
+    return function (done) {
+        var query = {};
+        query[patientProperty] = patient.id;
+        var args = [count, query, done];
+        fn.apply(obj, args);
+    };
+};
+
 exports.putPatientRefs = function (resourceSets, patients, patientProperty) {
     resourceSets.forEach(function (resources, index) {
         var reference = patients[index].id;

@@ -10,6 +10,8 @@ var appWrap = require('./app-wrap');
 var common = require('./common');
 
 var fn = common.generateTestItem;
+var fnId = common.searchById;
+var fnPt = common.searchByPatient;
 
 var resourceType = 'AllergyIntolerance';
 var testTitle = util.format('%s routes', resourceType);
@@ -59,6 +61,22 @@ describe(testTitle, function () {
     var n = resourceSets[0].length + resourceSets[1].length;
     it('search all using get', fn(r, r.search, [n, {}]));
     it('search all using post', fn(r, r.searchByPost, [n, {}]));
+
+    it('search not existing id', fn(r, r.search, [0, {
+        _id: '123456789012345678901234'
+    }]));
+
+    _.range(2).forEach(function (i) {
+        _.range(resourceSets[i].length).forEach(function (j) {
+            var title = util.format('search by id resource %s for patient %s', j, i);
+            it(title, fnId(r, r.search, resourceSets[i][j]));
+        }, this);
+    }, this);
+
+    _.range(2).forEach(function (i) {
+        var title = util.format('search by patient %s', i);
+        it(title, fnPt(r, r.search, patientSamples[i], patientProperty, resourceSets[i].length));
+    }, this);
 
     _.range(2).forEach(function (i) {
         _.range(resourceSets[i].length).forEach(function (j) {
