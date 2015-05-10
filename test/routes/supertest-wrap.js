@@ -73,7 +73,9 @@ base.read = function (sample, done) {
         .expect(200)
         .expect(function (res) {
             var resource = res.body;
-            self.readTransform(resource);
+            if (self.readTransform) {
+                self.readTransform(resource);
+            }
             expect(resource).to.deep.equal(sample);
         })
         .end(done);
@@ -87,7 +89,9 @@ base.readNegative = function (sample, done) {
         .expect(200)
         .expect(function (res) {
             var resource = res.body;
-            self.readTransform(resource);
+            if (self.readTransform) {
+                self.readTransform(resource);
+            }
             expect(resource).to.not.deep.equal(sample);
         })
         .end(done);
@@ -128,7 +132,9 @@ base._search = function (req, expectedCount, query, done) {
             expect(bundle.entry).to.have.length(expectedCount);
             for (var j = 0; j < expectedCount; ++j) {
                 var serverResource = bundle.entry[j].resource;
-                self.readTransform(serverResource);
+                if (self.readTransform) {
+                    self.readTransform(serverResource);
+                }
                 expect(serverResource).to.deep.equal(self.entryMapById[serverResource.id]);
             }
         })
