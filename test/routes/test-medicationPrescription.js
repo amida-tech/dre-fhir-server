@@ -1,280 +1,114 @@
 'use strict';
 
-var request = require('supertest');
-var chai = require('chai');
+var util = require('util');
+var _ = require('lodash');
 
-var expect = chai.expect;
-var fhirApp = require('../../config/app');
 var samples = require('../samples/medicationPrescription-samples');
 var patientSamples = require('../samples/patient-samples')();
+var supertestWrap = require('./supertest-wrap');
+var appWrap = require('./app-wrap');
+var common = require('./common');
 
-describe('routes medicationPrescription', function () {
-    var app;
-    var server;
-    var api;
+var fn = common.generateTestItem;
+var fnId = common.searchById;
+var fnPt = common.searchByPatient;
 
-    before(function (done) {
-        app = fhirApp({
-            db: {
-                "dbName": "fhirmedicationprescriptionapi"
-            }
-        });
-        server = app.listen(3001, done);
-        api = request.agent(app);
+var resourceType = 'MedicationPrescription';
+var testTitle = util.format('%s routes', resourceType);
+var patientProperty = 'patient';
+
+describe(testTitle, function () {
+    var dbName = util.format('fhir%sapi', resourceType.toLowerCase());
+    var appw = appWrap.instance(dbName);
+    var r = supertestWrap({
+        appWrap: appw,
+        resourceType: resourceType,
+        readTransform: function (resource) {
+            delete resource[patientProperty].display;
+        }
+    });
+    var pt = supertestWrap({
+        appWrap: appw,
+        resourceType: 'Patient'
     });
 
-    it('check config (inits database as well)', function (done) {
-        api.get('/config')
-            .expect(200)
-            .end(function (err, res) {
-                if (err) {
-                    done(err);
-                } else {
-                    expect(res.body.db.dbName).to.equal("fhirmedicationprescriptionapi");
-                    done();
-                }
-            });
+    var resourceSets = [samples.set0(), samples.set1()];
+
+    before(fn(appw, appw.start));
+
+    it('check config (inits database as well)', fn(r, r.config));
+
+    it('clear database', fn(appw, appw.cleardb));
+
+    it('fail to create resource 0 for patient 0 with patient ref missing', fn(r, r.createNegative, resourceSets[0][0]));
+
+    _.range(2).forEach(function (index) {
+        var title = util.format('create patient %s', index);
+        it(title, fn(pt, pt.create, [patientSamples[index]]));
+    }, this);
+
+    it('assign patient refs to all resources', function () {
+        common.putPatientRefs(resourceSets, patientSamples, patientProperty);
     });
 
-    it('clear database', function (done) {
-        var c = app.get('connection');
-        c.clearDatabase(done);
+    _.range(2).forEach(function (i) {
+        _.range(resourceSets[i].length).forEach(function (j) {
+            var title = util.format('create resource %s for patient %s', j, i);
+            it(title, fn(r, r.create, resourceSets[i][j]));
+        }, this);
+    }, this);
+
+    var n = resourceSets[0].length + resourceSets[1].length;
+    it('search all using get', fn(r, r.search, [n, {}]));
+    it('search all using post', fn(r, r.searchByPost, [n, {}]));
+
+    it('search not existing id', fn(r, r.search, [0, {
+        _id: '123456789012345678901234'
+    }]));
+
+    _.range(2).forEach(function (i) {
+        _.range(resourceSets[i].length).forEach(function (j) {
+            var title = util.format('search by id resource %s for patient %s', j, i);
+            it(title, fnId(r, r.search, resourceSets[i][j]));
+        }, this);
+    }, this);
+
+    _.range(2).forEach(function (i) {
+        var title = util.format('search by patient %s', i);
+        it(title, fnPt(r, r.search, patientSamples[i], patientProperty, resourceSets[i].length));
+    }, this);
+
+    _.range(2).forEach(function (i) {
+        _.range(resourceSets[i].length).forEach(function (j) {
+            var title = util.format('read resource %s for patient %s', j, i);
+            it(title, fn(r, r.read, resourceSets[i][j]));
+        }, this);
+    }, this);
+
+    it('update local resource 0 for patient 0', function () {
+        resourceSets[0][0].dateWritten = '2012-08-05';
+        resourceSets[0][0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-05';
     });
 
-    var samplesSet0 = samples.set0();
-    var samplesSet1 = samples.set1();
-
-    it('create with patient missing', function (done) {
-        var sample = samplesSet0[0];
-
-        api.post('/fhir/MedicationPrescription')
-            .send(sample)
-            .expect(400)
-            .end(done);
+    it('update local resource 0 for patient 1', function () {
+        resourceSets[1][0].dateWritten = '2012-08-05';
+        resourceSets[1][0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-05';
     });
 
-    var createPatientIt = function (index) {
-        var patientSample = patientSamples[index];
+    _.range(2).forEach(function (i) {
+        var ptTitle = util.format(' for patient %s', i);
+        it('detect resource 0 not on server' + ptTitle, fn(r, r.readNegative, resourceSets[i][0]));
+        it('update resource 0' + ptTitle, fn(r, r.update, resourceSets[i][0]));
+        it('read resource 0' + ptTitle, fn(r, r.read, resourceSets[i][0]));
+    }, this);
 
-        return function (done) {
-            api.post('/fhir/Patient')
-                .send(patientSample)
-                .expect(201)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var location = res.header.location;
-                        var p = location.split('/');
-                        expect(p).to.have.length(6);
-                        var id = p[3];
-                        p[3] = '';
-                        expect(p).to.deep.equal(['', 'fhir', 'Patient', '', '_history', '1']);
-                        patientSample.id = id;
-                        done();
-                    }
-                });
-        };
-    };
+    var n0 = resourceSets[0].length - 1;
+    var n1 = resourceSets[1].length - 1;
 
-    for (var i = 0; i < 2; ++i) {
-        it('create patient ' + i, createPatientIt(i));
-    }
+    it('delete last resource for patient 0', fn(r, r.delete, resourceSets[0][n0]));
+    it('delete last resource for patient 1', fn(r, r.delete, resourceSets[1][n1]));
 
-    it('assign patients to samples', function () {
-        [samplesSet0, samplesSet1].forEach(function (samplesSet, index) {
-            var reference = patientSamples[index].id;
-            samplesSet.forEach(function (sample) {
-                sample.patient = {
-                    reference: reference
-                };
-            });
-        });
-    });
+    it('search all using get', fn(r, r.search, [n0 + n1, {}]));
 
-    var entryMapById = {};
-    var entryIds = [];
-
-    var createIt = function (samplesSet, index) {
-        var sample = samplesSet[index];
-
-        return function (done) {
-            api.post('/fhir/MedicationPrescription')
-                .send(sample)
-                .expect(201)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var location = res.header.location;
-                        var p = location.split('/');
-                        expect(p).to.have.length(6);
-                        var id = p[3];
-                        p[3] = '';
-                        expect(p).to.deep.equal(['', 'fhir', 'MedicationPrescription', '', '_history', '1']);
-                        sample.id = id;
-                        entryMapById[id] = sample;
-                        entryIds.push(id);
-                        done();
-                    }
-                });
-        };
-    };
-
-    for (var j0 = 0; j0 < samplesSet0.length; ++j0) {
-        it('create for patient-0 ' + j0, createIt(samplesSet0, j0));
-    }
-
-    for (var j1 = 0; j1 < samplesSet1.length; ++j1) {
-        it('create for patient-1 ' + j1, createIt(samplesSet1, j1));
-    }
-
-    var searchIt = function (count, isPost, query) {
-        return function (done) {
-            var request = isPost ? api.post('/fhir/MedicationPrescription/_search') : api.get('/fhir/MedicationPrescription');
-            if (query) {
-                request.query(query);
-            }
-            request.expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var bundle = res.body;
-                        expect(bundle.entry).to.have.length(count);
-                        for (var j = 0; j < count; ++j) {
-                            var dbVital = bundle.entry[j].resource;
-                            delete dbVital.patient.display;
-                            expect(dbVital).to.deep.equal(entryMapById[dbVital.id]);
-                        }
-                        done();
-                    }
-                });
-        };
-    };
-
-    var n = samplesSet0.length + samplesSet1.length;
-    it('search (get - no param)', searchIt(n, false));
-    it('search (post - no param)', searchIt(n, true));
-
-    var readIt = function (samplesSet, index) {
-        return function (done) {
-            var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.get('/fhir/MedicationPrescription/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var resource = res.body;
-                        delete resource.patient.display;
-                        expect(resource).to.deep.equal(sample);
-                        done();
-                    }
-                });
-        };
-    };
-
-    for (var k0 = 0; k0 < samplesSet0.length; ++k0) {
-        it('read for patient-0 ' + k0, readIt(samplesSet0, k0));
-    }
-
-    for (var k1 = 0; k1 < samplesSet0.length; ++k1) {
-        it('read for patient-1 ' + k1, readIt(samplesSet1, k1));
-    }
-
-    it('update values', function () {
-        samplesSet0[0].dateWritten = '2012-08-05';
-        samplesSet0[0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-05';
-        samplesSet1[0].dateWritten = '2012-08-04';
-        samplesSet1[0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-04';
-    });
-
-    var updateIt = function (samplesSet, index) {
-        return function (done) {
-            var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.put('/fhir/MedicationPrescription/' + id)
-                .send(sample)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        done();
-                    }
-                });
-        };
-    };
-
-    var notReadIt = function (samplesSet, index) {
-        return function (done) {
-            var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.get('/fhir/MedicationPrescription/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        var resource = res.body;
-                        delete resource.patient.display;
-                        expect(resource).to.not.deep.equal(sample);
-                        done();
-                    }
-                });
-        };
-    };
-
-    it('detect updated not equal db for patient-0', notReadIt(samplesSet0, 0));
-    it('update for patient-0', updateIt(samplesSet0, 0));
-    it('read for patient-0', readIt(samplesSet0, 0));
-    it('detect updated not equal db for patient-1', notReadIt(samplesSet1, 0));
-    it('update for patient-1', updateIt(samplesSet1, 0));
-    it('read for patient-1', readIt(samplesSet1, 0));
-
-    var deleteIt = function (samplesSet, index) {
-        return function (done) {
-            var sample = samplesSet[index];
-            var id = sample.id;
-
-            api.delete('/fhir/MedicationPrescription/' + id)
-                .expect(200)
-                .end(function (err, res) {
-                    if (err) {
-                        return done(err);
-                    } else {
-                        done();
-                    }
-                });
-        };
-    };
-
-    var n0 = samplesSet0.length - 1;
-    var n1 = samplesSet1.length - 1;
-
-    it('delete last for patient-0', deleteIt(samplesSet0, n0));
-    it('delete last for patient-1', deleteIt(samplesSet1, n1));
-
-    it('search (no param)', searchIt(n0 + n1));
-
-    it('clear database', function (done) {
-        var c = app.get('connection');
-        c.clearDatabase(done);
-    });
-
-    after(function (done) {
-        var c = app.get('connection');
-        c.disconnect(function (err) {
-            if (err) {
-                done(err);
-            } else {
-                server.close(done);
-            }
-        });
-    });
+    after(fn(appw, appw.cleanUp));
 });

@@ -3,7 +3,8 @@
 var util = require('util');
 var _ = require('lodash');
 
-var samples = require('../samples/condition-samples');
+var vitalSamples = require('../samples/observation-vital-samples');
+var resultSamples = require('../samples/observation-result-samples');
 var patientSamples = require('../samples/patient-samples')();
 var supertestWrap = require('./supertest-wrap');
 var appWrap = require('./app-wrap');
@@ -13,7 +14,7 @@ var fn = common.generateTestItem;
 var fnId = common.searchById;
 var fnPt = common.searchByPatient;
 
-var resourceType = 'Condition';
+var resourceType = 'Observation';
 var testTitle = util.format('%s routes', resourceType);
 var patientProperty = 'subject';
 
@@ -32,7 +33,13 @@ describe(testTitle, function () {
         resourceType: 'Patient'
     });
 
-    var resourceSets = [samples.set0(), samples.set1()];
+    var resourceSets = [vitalSamples.set0(), vitalSamples.set1(), resultSamples.set0(), resultSamples.set1()];
+    resourceSets[0].panelStart = vitalSamples.panelStart0;
+    resourceSets[1].panelStart = vitalSamples.panelStart1;
+    resourceSets[2].panelStart = resultSamples.panelStart0;
+    resourceSets[3].panelStart = resultSamples.panelStart1;
+
+    var nSets = resourceSets.length;
 
     before(fn(appw, appw.start));
 
@@ -42,7 +49,7 @@ describe(testTitle, function () {
 
     it('fail to create resource 0 for patient 0 with patient ref missing', fn(r, r.createNegative, resourceSets[0][0]));
 
-    _.range(2).forEach(function (index) {
+    _.range(nSets).forEach(function (index) {
         var title = util.format('create patient %s', index);
         it(title, fn(pt, pt.create, [patientSamples[index]]));
     }, this);
@@ -51,14 +58,27 @@ describe(testTitle, function () {
         common.putPatientRefs(resourceSets, patientSamples, patientProperty);
     });
 
-    _.range(2).forEach(function (i) {
-        _.range(resourceSets[i].length).forEach(function (j) {
+    _.range(nSets).forEach(function (i) {
+        _.range(resourceSets[i].panelStart).forEach(function (j) {
             var title = util.format('create resource %s for patient %s', j, i);
             it(title, fn(r, r.create, resourceSets[i][j]));
         }, this);
     }, this);
 
-    var n = resourceSets[0].length + resourceSets[1].length;
+    it('populate resource panel element ids', function () {
+        common.putPanelElementRefs(resourceSets);
+    });
+
+    _.range(nSets).forEach(function (i) {
+        _.range(resourceSets[i].panelStart, resourceSets[i].length).forEach(function (j) {
+            var title = util.format('create resource (panel) %s for patient %s', j, i);
+            it(title, fn(r, r.create, resourceSets[i][j]));
+        }, this);
+    }, this);
+
+    var n = resourceSets.reduce(function (r, resources) {
+        return r + resources.length;
+    }, 0);
     it('search all using get', fn(r, r.search, [n, {}]));
     it('search all using post', fn(r, r.searchByPost, [n, {}]));
 
@@ -66,49 +86,45 @@ describe(testTitle, function () {
         _id: '123456789012345678901234'
     }]));
 
-    _.range(2).forEach(function (i) {
+    _.range(nSets).forEach(function (i) {
         _.range(resourceSets[i].length).forEach(function (j) {
             var title = util.format('search by id resource %s for patient %s', j, i);
             it(title, fnId(r, r.search, resourceSets[i][j]));
         }, this);
     }, this);
 
-    _.range(2).forEach(function (i) {
+    _.range(nSets).forEach(function (i) {
         var title = util.format('search by patient %s', i);
         it(title, fnPt(r, r.search, patientSamples[i], patientProperty, resourceSets[i].length));
     }, this);
 
-    _.range(2).forEach(function (i) {
+    _.range(nSets).forEach(function (i) {
         _.range(resourceSets[i].length).forEach(function (j) {
             var title = util.format('read resource %s for patient %s', j, i);
             it(title, fn(r, r.read, resourceSets[i][j]));
         }, this);
     }, this);
 
-    it('update local resource 0 for patient 0', function () {
-        resourceSets[0][0].onsetDateTime = '2002-01-01';
-        resourceSets[0][0].dateAsserted = '2002-01-01';
-    });
+    _.range(nSets).forEach(function (i) {
+        it(util.format('update local resource 0 for patient %s', i), function () {
+            resourceSets[i][0].valueQuantity.value += 1;
+        });
+    }, this);
 
-    it('update local resource 0 for patient 1', function () {
-        resourceSets[1][0].onsetDateTime = '2003-05-05';
-        resourceSets[1][0].dateAsserted = '2003-05-05';
-    });
-
-    _.range(2).forEach(function (i) {
+    _.range(nSets).forEach(function (i) {
         var ptTitle = util.format(' for patient %s', i);
         it('detect resource 0 not on server' + ptTitle, fn(r, r.readNegative, resourceSets[i][0]));
         it('update resource 0' + ptTitle, fn(r, r.update, resourceSets[i][0]));
         it('read resource 0' + ptTitle, fn(r, r.read, resourceSets[i][0]));
     }, this);
 
-    var n0 = resourceSets[0].length - 1;
-    var n1 = resourceSets[1].length - 1;
+    _.range(nSets).forEach(function (i) {
+        var nLast = resourceSets[i].length - 1;
+        var title = util.format('delete last resource for patient %s', i);
+        it(title, fn(r, r.delete, resourceSets[i][nLast]));
+    }, this);
 
-    it('delete last resource for patient 0', fn(r, r.delete, resourceSets[0][n0]));
-    it('delete last resource for patient 1', fn(r, r.delete, resourceSets[1][n1]));
-
-    it('search all using get', fn(r, r.search, [n0 + n1, {}]));
+    it('search all using get', fn(r, r.search, [n - 4, {}]));
 
     after(fn(appw, appw.cleanUp));
 });

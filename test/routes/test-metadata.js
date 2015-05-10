@@ -1,54 +1,35 @@
 'use strict';
 
+var util = require('util');
+
 var request = require('supertest');
 var chai = require('chai');
-var _ = require('lodash');
 
 var expect = chai.expect;
-var fhirApp = require('../../config/app');
 var config = require('../../config/config.json');
+var appWrap = require('./app-wrap');
+var common = require('./common');
 
-describe('metadata route', function () {
-    var app;
-    var server;
-    var api;
+var fn = common.generateTestItem;
 
-    before(function (done) {
-        app = fhirApp({
-            db: {
-                "dbName": "fhirmetadata"
-            }
-        });
-        server = app.listen(3001, done);
-        api = request.agent(app);
-    });
+var resourceType = 'metadata';
+var testTitle = util.format('%s routes', resourceType);
+
+describe(testTitle, function () {
+    var dbName = util.format('fhir%sapi', resourceType.toLowerCase());
+    var appw = appWrap.instance(dbName);
+    var api = appw.api();
+
+    before(fn(appw, appw.start));
 
     it('check metadata', function (done) {
         api.get('/fhir/metadata')
             .expect(200)
-            .end(function (err, res) {
-                if (err) {
-                    done(err);
-                } else {
-                    expect(res.body).to.deep.equal(config.conformance);
-                    done();
-                }
-            });
+            .expect(function (res) {
+                expect(res.body).to.deep.equal(config.conformance);
+            })
+            .end(done);
     });
 
-    it('clear database', function (done) {
-        var c = app.get('connection');
-        c.clearDatabase(done);
-    });
-
-    after(function (done) {
-        var c = app.get('connection');
-        c.disconnect(function (err) {
-            if (err) {
-                done(err);
-            } else {
-                server.close(done);
-            }
-        });
-    });
+    after(fn(appw, appw.cleanUp));
 });

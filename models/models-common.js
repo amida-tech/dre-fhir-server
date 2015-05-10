@@ -63,7 +63,8 @@ methods.create = function (bbr, resource, callback) {
 var paramsToBBRParams = (function () {
     var map = {
         '_id': '_id',
-        'patient': 'pat_key'
+        'patient': 'pat_key',
+        'subject': 'pat_key'
     };
 
     var prefixMap = {
@@ -99,15 +100,15 @@ var paramsToBBRParams = (function () {
     };
 })();
 
-var paramsTransform = function (bbr, params, callback) {
+var paramsTransform = function (bbr, patientRefKey, params, callback) {
     if (params) {
         params = _.cloneDeep(params);
-        if (params.patient) {
-            bbr.idToPatientInfo('demographics', params.patient.value, function (err, patientInfo) {
+        if (params[patientRefKey]) {
+            bbr.idToPatientInfo('demographics', params[patientRefKey].value, function (err, patientInfo) {
                 if (err) {
                     callback(err);
                 } else {
-                    params.patient.value = patientInfo.key;
+                    params[patientRefKey].value = patientInfo.key;
                     callback(null, paramsToBBRParams(params));
                 }
             });
@@ -122,7 +123,7 @@ var paramsTransform = function (bbr, params, callback) {
 methods.search = function (bbr, params, callback) {
     var sectionName = this.sectionName;
     var patientRefKey = this.patientRefKey;
-    paramsTransform(bbr, params, function (err, bbrParams) {
+    paramsTransform(bbr, patientRefKey, params, function (err, bbrParams) {
         if (err) {
             callback(err);
         } else {

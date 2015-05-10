@@ -103,13 +103,13 @@ methods.searchById = function (model, sample, map, count) {
 };
 
 methods.searchByPatient = function (model, sample, map, count) {
+    var patientRefKey = this.patientRefKey;
     var self = this;
     return function (done) {
-        var params = {
-            patient: {
-                value: sample.id,
-                type: 'reference'
-            }
+        var params = {};
+        params[patientRefKey] = {
+            value: sample.id,
+            type: 'reference'
         };
         var fn = self.search(model, params, map, count);
         fn(done);
