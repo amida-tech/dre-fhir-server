@@ -22,6 +22,9 @@ describe(testTitle, function () {
     });
 
     var resources = samples();
+    var resource0Clone = _.cloneDeep(resources[0]);
+    resource0Clone.birthDate = '1978-06-09';
+    resources.push(resource0Clone);
 
     before(fn(appw, appw.start));
 
@@ -38,6 +41,55 @@ describe(testTitle, function () {
 
     it('search all using get', fn(r, r.search, [n, {}]));
     it('search all using post', fn(r, r.searchByPost, [n, {}]));
+
+    it('search not existing id', fn(r, r.search, [0, {
+        _id: '123456789012345678901234'
+    }]));
+
+    _.range(n).forEach(function (i) {
+        var title = util.format('search by id resource %s', i);
+        it(title, fn(r, r.search, [n, {
+            _id: resources[i].id
+        }]));
+    }, this);
+
+    it('search not existing family', fn(r, r.search, [0, {
+        family: 'donotexist'
+    }]));
+
+    it('search by resource 0 family find 2', fn(r, r.search, [2, {
+        family: resources[0].name[0].family[0]
+    }]));
+
+    it('search by resource 1 family find 1', fn(r, r.search, [1, {
+        family: resources[1].name[0].family[0]
+    }]));
+
+    var birthDates = resources.map(function (resource) {
+        return resource.birthDay;
+    });
+    birthDates.sort();
+    var bbMiddleIndex = Math.floor(birthDates.length / 2);
+    var bbMiddle = resources[bbMiddleIndex].birthDate;
+
+    it('search by birthDate not existing', fn(r, r.search, [0, {
+        birthDate: '1900-01-01'
+    }]));
+    it('search by birthDate find 1', fn(r, r.search, [1, {
+        birthDate: bbMiddle
+    }]));
+    it('search by birthDate (use < )', fn(r, r.search, [bbMiddleIndex, {
+        birthDate: '<' + bbMiddle
+    }]));
+    it('search by birthDate (use <= )', fn(r, r.search, [bbMiddleIndex + 1, {
+        birthDate: '<=' + bbMiddle
+    }]));
+    it('search by birthDate (use >)', fn(r, r.search, [n - bbMiddleIndex - 1, {
+        birthDate: '>' + bbMiddle
+    }]));
+    it('search by birthDate (use >=)', fn(r, r.search, [n - bbMiddleIndex, {
+        birthDate: '>=' + bbMiddle
+    }]));
 
     _.range(n).forEach(function (i) {
         var title = util.format('read resource %s', i);
