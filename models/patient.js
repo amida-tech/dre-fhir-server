@@ -7,6 +7,7 @@ var modelsUtil = require('./models-util');
 var bbu = require('blue-button-util');
 
 var bbudt = bbu.datetime;
+var paramsToBBRParams = modelsUtil.paramsToBBRParams;
 
 var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
     var currPtKey = candidate + (index === 0 ? index : '');
@@ -50,48 +51,14 @@ exports.create = function (bbr, resource, callback) {
     });
 };
 
-var paramsToBBRParams = (function () {
-    var map = {
-        'family': 'data.name.last',
-        'birthDate': 'data.dob.point.date',
-        '_id': '_id'
-    };
-
-    var prefixMap = {
-        '<': '$lt',
-        '>': '$gt',
-        '>=': '$gte',
-        '<=': '$lte'
-    };
-
-    return function (params) {
-        var keys = Object.keys(params);
-        var queryObject = {};
-        keys.forEach(function (key) {
-            var target = map[key];
-            if (target) {
-                var paramsElement = params[key];
-                var value = paramsElement.value;
-                if (paramsElement.type === 'date') {
-                    var modelDate = bbudt.dateToModel(value);
-                    value = modelDate.date;
-                }
-                if (paramsElement.prefix) {
-                    var op = prefixMap[paramsElement.prefix];
-                    var valueWithAction = {};
-                    valueWithAction[op] = value;
-                    queryObject[target] = valueWithAction;
-                } else {
-                    queryObject[target] = value;
-                }
-            }
-        });
-        return queryObject;
-    };
-})();
+var paramToBBRParamMap = {
+    'family': 'data.name.last',
+    'birthDate': 'data.dob.point.date',
+    '_id': '_id'
+};
 
 exports.search = function (bbr, params, callback) {
-    var bbrParams = params ? paramsToBBRParams(params) : {};
+    var bbrParams = params ? paramsToBBRParams(params, paramToBBRParamMap) : {};
     bbr.getMultiSection('demographics', bbrParams, false, function (err, results) {
         if (err) {
             callback(err);

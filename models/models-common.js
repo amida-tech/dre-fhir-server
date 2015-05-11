@@ -9,6 +9,7 @@ var _ = require('lodash');
 var modelsUtil = require('./models-util');
 
 var bbudt = bbu.datetime;
+var paramsToBBRParams = modelsUtil.paramsToBBRParams;
 
 var methods = {};
 
@@ -60,45 +61,11 @@ methods.create = function (bbr, resource, callback) {
     });
 };
 
-var paramsToBBRParams = (function () {
-    var map = {
-        '_id': '_id',
-        'patient': 'pat_key',
-        'subject': 'pat_key'
-    };
-
-    var prefixMap = {
-        '<': '$lt',
-        '>': '$gt',
-        '>=': '$gte',
-        '<=': '$lte'
-    };
-
-    return function (params) {
-        var keys = Object.keys(params);
-        var queryObject = {};
-        keys.forEach(function (key) {
-            var target = map[key];
-            if (target) {
-                var paramsElement = params[key];
-                var value = paramsElement.value;
-                if (paramsElement.type === 'date') {
-                    var modelDate = bbudt.dateToModel(value);
-                    value = modelDate.date;
-                }
-                if (paramsElement.prefix) {
-                    var op = prefixMap[paramsElement.prefix];
-                    var valueWithAction = {};
-                    valueWithAction[op] = value;
-                    queryObject[target] = valueWithAction;
-                } else {
-                    queryObject[target] = value;
-                }
-            }
-        });
-        return queryObject;
-    };
-})();
+var paramToBBRParamMap = {
+    '_id': '_id',
+    'patient': 'pat_key',
+    'subject': 'pat_key'
+};
 
 var paramsTransform = function (bbr, patientRefKey, params, callback) {
     if (params) {
@@ -109,11 +76,11 @@ var paramsTransform = function (bbr, patientRefKey, params, callback) {
                     callback(err);
                 } else {
                     params[patientRefKey].value = patientInfo.key;
-                    callback(null, paramsToBBRParams(params));
+                    callback(null, paramsToBBRParams(params, paramToBBRParamMap));
                 }
             });
         } else {
-            callback(null, paramsToBBRParams(params));
+            callback(null, paramsToBBRParams(params, paramToBBRParamMap));
         }
     } else {
         callback(null, {});
