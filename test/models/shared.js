@@ -1,6 +1,7 @@
 'use strict';
 
 var chai = require('chai');
+var sinon = require('sinon');
 var bbr = require('blue-button-record');
 
 var patientModel = require('../../models/patient');
@@ -40,6 +41,23 @@ methods.detectMissingPatient = function (model, sample) {
             } else {
                 done(new Error('Missing patient not detected.'));
             }
+        });
+    };
+};
+
+methods.createDbError = function (model, sample, method) {
+    return function (done) {
+        var stub = sinon.stub(bbr, method, function () {
+            arguments[arguments.length - 1](new Error(method));
+        });
+
+        model.create(bbr, sample, function (err, id) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('internalDbError');
+            expect(err.message).to.equal(method);
+            stub.restore();
+            done();
         });
     };
 };

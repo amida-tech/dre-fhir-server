@@ -33,6 +33,9 @@ describe('models observation result', function () {
         shared.assignPatient(samplesSet1, patientSamples[1]);
     });
 
+    it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSource'));
+    it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSection'));
+
     var entryMapById = {};
     var entryIds = [];
 

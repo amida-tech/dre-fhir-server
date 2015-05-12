@@ -1,6 +1,7 @@
 'use strict';
 
 var chai = require('chai');
+var sinon = require('sinon');
 var bbr = require('blue-button-record');
 
 var model = require('../../models/allergyIntolerance');
@@ -34,6 +35,9 @@ describe('models allergyIntolerance', function () {
     it('assign patient-1 to sample set-1', function () {
         shared.assignPatient(samplesSet1, patientSamples[1]);
     });
+
+    it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSource'));
+    it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSection'));
 
     var entryMapById = {};
     var entryIds = [];

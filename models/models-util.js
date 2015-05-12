@@ -4,6 +4,8 @@ var bbu = require('blue-button-util');
 
 var bbudt = bbu.datetime;
 
+var errUtil = require('../lib/error-util');
+
 exports.saveResourceAsSource = function (connection, ptKey, resource, callback) {
     var resourceAsText = JSON.stringify(resource, undefined, 4);
     var metaData = {
@@ -11,7 +13,13 @@ exports.saveResourceAsSource = function (connection, ptKey, resource, callback) 
         name: 'fhir.patient',
         size: resourceAsText.length
     };
-    connection.saveSource(ptKey, resourceAsText, metaData, 'fhir', callback);
+    connection.saveSource(ptKey, resourceAsText, metaData, 'fhir', function (err, sourceId) {
+        if (err) {
+            callback(errUtil.error('internalDbError', err.message));
+        } else {
+            callback(null, sourceId);
+        }
+    });
 };
 
 exports.findPatientKey = function (connection, resource, patientProperty, callback) {

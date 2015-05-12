@@ -7,6 +7,7 @@ var bbu = require('blue-button-util');
 var _ = require('lodash');
 
 var modelsUtil = require('./models-util');
+var errUtil = require('../lib/error-util');
 
 var bbudt = bbu.datetime;
 var paramsToBBRParams = modelsUtil.paramsToBBRParams;
@@ -28,8 +29,8 @@ methods.create = function (bbr, resource, callback) {
     var sectionName = this.sectionName;
     var entry = this.resourceToModelEntry(resource);
     if (!entry) {
-        var msg = util.format('%s resource appears to be invalid', resource.resourceType);
-        callback(new Error(msg));
+        var msg = util.format('%s resource cannot be parsed', resource.resourceType);
+        callback(errUtil.error('fhirToModel', msg));
         return;
     }
     if (resource.related) {
@@ -50,7 +51,7 @@ methods.create = function (bbr, resource, callback) {
                 } else {
                     bbr.saveSection(sectionName, ptKey, section, sourceId, function (err, id) {
                         if (err) {
-                            callback(err);
+                            callback(errUtil.error('internalDbError', err.message));
                         } else {
                             callback(null, id.toString());
                         }
