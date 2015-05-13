@@ -1,150 +1,111 @@
 'use strict';
 
 var chai = require('chai');
+var _ = require('lodash');
 var bbr = require('blue-button-record');
 
-var patientHandler = require('../../models/patient');
-var patientSamples = require('../samples/patient-samples')();
+var model = require('../../models/patient');
+var samples = require('../samples/patient-samples')();
+
+var shared = require('./shared')();
 
 var expect = chai.expect;
 
 describe('models patient', function () {
-    before('connectDatabase', function (done) {
-        bbr.connectDatabase('localhost', {
-            dbName: 'fhirpatientmodel'
-        }, function (err) {
-            if (err) {
-                done(err);
-            } else {
-                bbr.clearDatabase(done);
-            }
-        });
-    });
+    before('connectDatabase', shared.connectDatabase('fhirpatientmodel'));
+
+    var sample0Clone = _.cloneDeep(samples[0]);
+    sample0Clone.birthDate = '1978-06-09';
+    samples.push(sample0Clone);
 
     var patients = {};
 
-    var createIt = function (index) {
-        var patientSample = patientSamples[index];
+    var n = samples.length;
 
-        return function (done) {
-            patientHandler.create(bbr, patientSample, function (err, id) {
-                if (err) {
-                    done(err);
-                } else {
-                    patientSample.id = id;
-                    patients[id] = patientSample;
-                    done();
-                }
-            });
+    _.range(samples.length).forEach(function (i) {
+        it('create patient ' + i, shared.create(model, samples[i], [], patients));
+    }, this);
+
+    it('search (no param)', shared.search(model, null, patients, n));
+
+    _.range(samples.length).forEach(function (i) {
+        it('search patient ' + i + ' by id', shared.searchById(model, samples[i], patients, 1));
+    }, this);
+
+    it('search by family and find 2', shared.search(model, {
+        family: {
+            value: samples[0].name[0].family[0]
+        }
+    }, patients, 2));
+    it('search by family and find 1', shared.search(model, {
+        family: {
+            value: samples[1].name[0].family[0]
+        }
+    }, patients, 1));
+    it('search by family and find none', shared.search(model, {
+        family: {
+            value: 'donotexist'
+        }
+    }, patients, 0));
+
+    var birthDates = samples.map(function (sample) {
+        return sample.birthDay;
+    });
+    birthDates.sort();
+    var bbMiddleIndex = Math.floor(birthDates.length / 2);
+    var bbMiddle = samples[bbMiddleIndex].birthDate;
+
+    var bd = function (date, prefix) {
+        return {
+            birthDate: {
+                value: date,
+                type: 'date',
+                prefix: prefix
+            }
         };
     };
 
-    var n = patientSamples.length;
+    it('search by birthDate not existing', shared.search(model, bd('1900-01-01', null), patients, 0));
+    it('search by birthDate existing 1', shared.search(model, bd(bbMiddle, null), patients, 1));
+    it('search by birthDate existing <', shared.search(model, bd(bbMiddle, '<'), patients, bbMiddleIndex));
+    it('search by birthDate existing <=', shared.search(model, bd(bbMiddle, '<='), patients, bbMiddleIndex + 1));
+    it('search by birthDate existing >', shared.search(model, bd(bbMiddle, '>'), patients, n - bbMiddleIndex - 1));
+    it('search by birthDate existing >=', shared.search(model, bd(bbMiddle, '>='), patients, n - bbMiddleIndex));
 
-    for (var i = 0; i < n; ++i) {
-        it('create ' + i, createIt(i));
-    }
+    _.range(samples.length).forEach(function (i) {
+        it('read for patient ' + i, shared.read(model, samples[i]));
+    }, this);
 
-    var searchIt = function (count) {
-        return function (done) {
-            patientHandler.search(bbr, null, function (err, bundle) {
-                if (err) {
-                    done(err);
-                } else {
-                    expect(bundle.entry).to.have.length(count);
-                    for (var j = 0; j < count; ++j) {
-                        var dbPatient = bundle.entry[j].resource;
-                        expect(dbPatient).to.deep.equal(patients[dbPatient.id]);
-                    }
-                    done();
-                }
-            });
-        };
-    };
+    it('update bad resource', shared.updateBadResource(model, samples[0]));
+    it('update invalid id', shared.updateMissing(model, samples[0], 'abc'));
+    it('update valid id missing', shared.updateMissing(model, samples[0], '123456789012345678901234'));
+    it('update db error simulation, idToPatientKey', shared.updateDbError(model, samples[0], 'idToPatientKey'));
+    it('udpate db error simulation, saveSource', shared.updateDbError(model, samples[0], 'saveSource'));
+    it('udpate db error simulation, replaceEntry', shared.updateDbError(model, samples[0], 'replaceEntry'));
 
-    it('search (no param)', searchIt(n));
-
-    var readIt = function (index) {
-        return function (done) {
-            var patientSample = patientSamples[index];
-            var id = patientSample.id;
-
-            patientHandler.read(bbr, id, function (err, resource) {
-                if (err) {
-                    done(err);
-                } else {
-                    expect(resource).to.deep.equal(patientSample);
-                    done();
-                }
-            });
-        };
-    };
-
-    for (var j = 0; j < n; ++j) {
-        it('read ' + i, readIt(j));
-    }
-
-    it('exchange samples 0 <-> 1', function () {
-        var patientSample0 = patientSamples[0];
-        var patientSample1 = patientSamples[1];
-        var id0 = patientSample0.id;
-        var id1 = patientSample1.id;
-        patientSample0.id = id1;
-        patientSample1.id = id0;
-        patientSamples[0] = patientSample1;
-        patientSamples[1] = patientSample0;
-        patients[id1] = patientSample0;
-        patients[id0] = patientSample1;
+    it('update local resource 0', function () {
+        samples[0].gender = 'female';
     });
 
-    var updateIt = function (index) {
-        return function (done) {
-            var patientSample = patientSamples[index];
-
-            patientHandler.update(bbr, patientSample, function (err) {
-                if (err) {
-                    done(err);
-                } else {
-                    done();
-                }
-            });
-        };
-    };
-
-    for (var k = 0; k < 2; ++k) {
-        it('update ' + k, updateIt(k));
-        it('read ' + k, readIt(k));
-    }
-
-    var deleteIt = function (index) {
-        return function (done) {
-            var patientSample = patientSamples[index];
-
-            patientHandler.delete(bbr, patientSample.id, function (err) {
-                if (err) {
-                    done(err);
-                } else {
-                    done();
-                }
-            });
-        };
-    };
-
-    for (var l = n - 2; l < n; ++l) {
-        it('delete ' + l, deleteIt(l));
-    }
-
-    it('search (no param)', searchIt(n - 2));
-
-    it('clearDatabase', function (done) {
-        bbr.clearDatabase(function (err) {
-            done(err);
-        });
+    it('update local resource 1', function () {
+        samples[1].birthDate = "1981-11-11";
     });
 
-    after(function (done) {
-        bbr.disconnect(function (err) {
-            done(err);
-        });
-    });
+    _.range(2).forEach(function (i) {
+        it('detect updated patient ' + i + ' not equal db', shared.readNegative(model, samples[i]));
+        it('update patient ' + i, shared.update(model, samples[i]));
+        it('read updated patient ' + i, shared.read(model, samples[i]));
+    }, this);
+
+    it('delete invalid id', shared.deleteMissing(model, 'abc'));
+    it('delete valid id missing', shared.deleteMissing(model, '123456789012345678901234'));
+    it('delete db error simulation, idToPatientKey', shared.deleteDbError(model, samples[n - 1], 'idToPatientKey'));
+    it('delete db error simulation, removeEntry', shared.deleteDbError(model, samples[n - 1], 'removeEntry'));
+
+    it('delete last patient', shared.delete(model, samples[n - 1]));
+    it('delete next to last', shared.delete(model, samples[n - 2]));
+
+    it('search (no param)', shared.search(model, null, patients, n - 2));
+
+    after(shared.clearDatabase);
 });

@@ -89,7 +89,7 @@ describe('models allergyIntolerance', function () {
     it('update bad resource', shared.updateBadResource(model, samplesSet0[0]));
     it('update invalid id', shared.updateMissing(model, samplesSet0[0], 'abc'));
     it('update valid id missing', shared.updateMissing(model, samplesSet0[0], '123456789012345678901234'));
-    it('update db error simulation, idToPatientInfo', shared.updateDbError(model, samplesSet0[0], 'idToPatientInfo'));
+    it('update db error simulation, idToPatientKey', shared.updateDbError(model, samplesSet0[0], 'idToPatientKey'));
     it('udpate db error simulation, saveSource', shared.updateDbError(model, samplesSet0[0], 'saveSource'));
     it('udpate db error simulation, replaceEntry', shared.updateDbError(model, samplesSet0[0], 'replaceEntry'));
 

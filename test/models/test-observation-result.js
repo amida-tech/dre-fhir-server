@@ -9,7 +9,9 @@ var patientModel = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
 var _ = require('lodash');
 
-var shared = require('./shared')();
+var shared = require('./shared')({
+    patientRefKey: 'subject'
+});
 
 var expect = chai.expect;
 

@@ -3,8 +3,14 @@
 var bundleUtil = require('../lib/bundle-util');
 var bbFhir = require('blue-button-fhir');
 var bbGenFhir = require('blue-button-gen-fhir');
-var modelsUtil = require('./models-util');
 var bbu = require('blue-button-util');
+
+var modelsUtil = require('./models-util');
+var modelsCommon = require('./models-common');
+
+var library = modelsCommon({
+    sectionName: 'demographics'
+});
 
 var bbudt = bbu.datetime;
 var paramsToBBRParams = modelsUtil.paramsToBBRParams;
@@ -93,42 +99,9 @@ exports.read = function (bbr, id, callback) {
 };
 
 exports.update = function (bbr, resource, callback) {
-    var bundle = bundleUtil.toBundle(resource);
-    var model = bbFhir.toModel(bundle);
-    var demographics = model.data.demographics;
-    bbr.idToPatientKey('demographics', resource.id, function (err, ptKey) {
-        if (err) {
-            callback(err);
-        } else {
-            modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, sourceId) {
-                if (err) {
-                    callback(err);
-                } else {
-                    bbr.replaceEntry('demographics', ptKey, resource.id, sourceId, demographics, function (err, id) {
-                        if (err) {
-                            callback(err);
-                        } else {
-                            callback(null);
-                        }
-                    });
-                }
-            });
-        }
-    });
+    library.update(bbr, resource, callback);
 };
 
 exports.delete = function (bbr, id, callback) {
-    bbr.idToPatientKey('demographics', id, function (err, ptKey) {
-        if (err) {
-            callback(err);
-        } else {
-            bbr.removeEntry('demographics', ptKey, id, function (err) {
-                if (err) {
-                    callback(err);
-                } else {
-                    callback(null);
-                }
-            });
-        }
-    });
+    library.delete(bbr, id, callback);
 };

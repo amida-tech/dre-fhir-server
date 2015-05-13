@@ -184,18 +184,18 @@ methods.update = function (bbr, resource, callback) {
     if (!entry) {
         return;
     }
-    bbr.idToPatientInfo(sectionName, resource.id, function (err, patientInfo) {
+    bbr.idToPatientKey(sectionName, resource.id, function (err, ptKey) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
-        } else if (!patientInfo) {
+        } else if (!ptKey) {
             var missingMsg = util.format('No resource with id %s', resource.id);
             callback(errUtil.error('updateMissing', missingMsg));
         } else {
-            modelsUtil.saveResourceAsSource(bbr, patientInfo.key, resource, function (err, sourceId) {
+            modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, sourceId) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
-                    bbr.replaceEntry(sectionName, patientInfo.key, resource.id, sourceId, entry, function (err, id) {
+                    bbr.replaceEntry(sectionName, ptKey, resource.id, sourceId, entry, function (err, id) {
                         if (err) {
                             callback(errUtil.error('internalDbError', err.message));
                         } else {

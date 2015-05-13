@@ -15,7 +15,7 @@ var methods = {};
 module.exports = function (options) {
     var result = Object.create(methods);
     options = options || {};
-    result.patientRefKey = options.patientRefKey || 'subject';
+    result.patientRefKey = options.patientRefKey;
     return result;
 };
 
@@ -126,7 +126,9 @@ methods.search = function (model, params, map, count) {
                 expect(bundle.entry).to.have.length(count);
                 for (var j = 0; j < count; ++j) {
                     var dbResource = bundle.entry[j].resource;
-                    delete dbResource[patientRefKey].display;
+                    if (patientRefKey) {
+                        delete dbResource[patientRefKey].display;
+                    }
                     expect(dbResource).to.deep.equal(map[dbResource.id]);
                 }
                 done();
@@ -219,7 +221,9 @@ methods.read = function (model, sample) {
             if (err) {
                 done(err);
             } else {
-                delete resource[patientRefKey].display;
+                if (patientRefKey) {
+                    delete resource[patientRefKey].display;
+                }
                 expect(resource).to.deep.equal(sample);
                 done();
             }
@@ -267,7 +271,9 @@ methods.readNegative = function (model, sample) {
             if (err) {
                 done(err);
             } else {
-                delete resource[patientRefKey].display;
+                if (patientRefKey) {
+                    delete resource[patientRefKey].display;
+                }
                 expect(resource).to.not.deep.equal(sample);
                 done();
             }
