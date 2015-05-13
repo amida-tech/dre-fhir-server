@@ -1,5 +1,7 @@
 'use strict';
 
+var util = require('util');
+
 var bbu = require('blue-button-util');
 
 var bbudt = bbu.datetime;
@@ -26,16 +28,17 @@ exports.findPatientKey = function (connection, resource, patientProperty, callba
     var p = resource[patientProperty];
     var reference = p && p.reference;
     if (!reference) {
-        callback(new Error('No patient specified'));
+        callback(errUtil.error('createPatientMissing', 'No patient specified'));
     } else {
         connection.idToPatientKey('demographics', reference, function (err, ptKey) {
             if (err) {
-                callback(err);
+                callback(errUtil.error('internalDbError', err.message));
             } else {
                 if (ptKey) {
                     callback(null, ptKey);
                 } else {
-                    callback(new Error('Patient Not Found'));
+                    var missingMsg = util.format('No patient resource with id %s', reference);
+                    callback(errUtil.error('createPatientMissing', missingMsg));
                 }
             }
         });

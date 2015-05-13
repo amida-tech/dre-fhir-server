@@ -77,6 +77,20 @@ methods.createBadResource = function (model) {
     };
 };
 
+methods.createBadPatientId = function (model, sample, badId) {
+    var self = this;
+    return function (done) {
+        var sampleClone = _.cloneDeep(sample);
+        sampleClone[self.patientRefKey].reference = badId;
+        model.create(bbr, sampleClone, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('createPatientMissing');
+            done();
+        });
+    };
+};
+
 methods.create = function (model, sample, list, map) {
     return function (done) {
         model.create(bbr, sample, function (err, id) {
@@ -121,6 +135,26 @@ methods.search = function (model, params, map, count) {
     };
 };
 
+methods.searchDbError = function (model, params, method, stubFn) {
+    var patientRefKey = this.patientRefKey;
+    return function (done) {
+        if (!stubFn) {
+            stubFn = function () {
+                arguments[arguments.length - 1](new Error(method));
+            };
+        }
+        var stub = sinon.stub(bbr, method, stubFn);
+        model.search(bbr, params, function (err, bundle) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('internalDbError');
+            expect(err.message).to.equal(method);
+            stub.restore();
+            done();
+        });
+    };
+};
+
 methods.searchById = function (model, sample, map, count) {
     var self = this;
     return function (done) {
@@ -145,6 +179,34 @@ methods.searchByPatient = function (model, sample, map, count) {
             type: 'reference'
         };
         var fn = self.search(model, params, map, count);
+        fn(done);
+    };
+};
+
+methods.searchByPatientDbError = function (model, sample, method, stubFn) {
+    var patientRefKey = this.patientRefKey;
+    var self = this;
+    return function (done) {
+        var params = {};
+        params[patientRefKey] = {
+            value: sample.id,
+            type: 'reference'
+        };
+        var fn = self.searchDbError(model, params, method, stubFn);
+        fn(done);
+    };
+};
+
+methods.searchByMissingPatient = function (model, id, map) {
+    var patientRefKey = this.patientRefKey;
+    var self = this;
+    return function (done) {
+        var params = {};
+        params[patientRefKey] = {
+            value: id,
+            type: 'reference'
+        };
+        var fn = self.search(model, params, map, 0);
         fn(done);
     };
 };
@@ -281,6 +343,37 @@ methods.delete = function (model, sample) {
             } else {
                 done();
             }
+        });
+    };
+};
+
+methods.deleteMissing = function (model, id) {
+    return function (done) {
+        model.delete(bbr, id, function (err, resource) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('deleteMissing');
+            done();
+        });
+    };
+};
+
+methods.deleteDbError = function (model, sample, method, stubFn) {
+    return function (done) {
+        if (!stubFn) {
+            stubFn = function () {
+                arguments[arguments.length - 1](new Error(method));
+            };
+        }
+        var stub = sinon.stub(bbr, method, stubFn);
+        var id = sample.id;
+        model.delete(bbr, id, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('internalDbError');
+            expect(err.message).to.equal(method);
+            stub.restore();
+            done();
         });
     };
 };

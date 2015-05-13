@@ -75,11 +75,13 @@ var paramsTransform = function (bbr, patientRefKey, params, callback) {
     if (params) {
         params = _.cloneDeep(params);
         if (params[patientRefKey]) {
-            bbr.idToPatientInfo('demographics', params[patientRefKey].value, function (err, patientInfo) {
+            bbr.idToPatientKey('demographics', params[patientRefKey].value, function (err, patientKey) {
                 if (err) {
-                    callback(err);
+                    callback(errUtil.error('internalDbError', err.message));
+                } else if (!patientKey) {
+                    callback(null, null);
                 } else {
-                    params[patientRefKey].value = patientInfo.key;
+                    params[patientRefKey].value = patientKey;
                     callback(null, paramsToBBRParams(params, paramToBBRParamMap));
                 }
             });
@@ -97,10 +99,17 @@ methods.search = function (bbr, params, callback) {
     paramsTransform(bbr, patientRefKey, params, function (err, bbrParams) {
         if (err) {
             callback(err);
+        } else if (!bbrParams) {
+            var fhirResults = {
+                resourceType: 'Bundle',
+                total: 0,
+                entry: []
+            };
+            callback(null, fhirResults);
         } else {
             bbr.getMultiSection(sectionName, bbrParams, true, function (err, results) {
                 if (err) {
-                    callback(err);
+                    callback(errUtil.error('internalDbError', err.message));
                 } else {
                     var bundleEntry = results.map(function (result) {
                         var resource = bbGenFhir.entryToResource(sectionName, result);
@@ -203,11 +212,14 @@ methods.delete = function (bbr, id, callback) {
     var sectionName = this.sectionName;
     bbr.idToPatientKey(sectionName, id, function (err, ptKey) {
         if (err) {
-            callback(err);
+            callback(errUtil.error('internalDbError', err.message));
+        } else if (!ptKey) {
+            var missingMsg = util.format('No resource with id %s', id);
+            callback(errUtil.error('deleteMissing', missingMsg));
         } else {
             bbr.removeEntry(sectionName, ptKey, id, function (err) {
                 if (err) {
-                    callback(err);
+                    callback(errUtil.error('internalDbError', err.message));
                 } else {
                     callback(null);
                 }
