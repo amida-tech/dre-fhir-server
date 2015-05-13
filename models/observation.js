@@ -1,9 +1,11 @@
 'use strict';
 
+var util = require('util');
 var bbFhir = require('blue-button-fhir');
 
 var modelsCommon = require('./models-common');
 var bundleUtil = require('../lib/bundle-util');
+var errUtil = require('../lib/error-util');
 
 var libraryVitals = modelsCommon({
     sectionName: 'vitals',
@@ -17,12 +19,14 @@ var libraryResults = modelsCommon({
 
 var findSection = function (bbr, id, callback) {
     bbr.idToPatientInfo('vitals', id, function (err, patientInfoVitals) {
-        if (err || !patientInfoVitals) {
+        if (err) {
+            callback(errUtil.error('internalDbError', err.message));
+        } else if (!patientInfoVitals) {
             bbr.idToPatientInfo('results', id, function (err, patientInfoResults) {
                 if (err) {
-                    callback(err);
+                    callback(errUtil.error('internalDbError', err.message));
                 } else if (!patientInfoResults) {
-                    callback(new Error('No patient is found'));
+                    callback(null, null);
                 } else {
                     callback(null, 'results');
                 }
@@ -63,6 +67,9 @@ exports.read = function (bbr, id, callback) {
     findSection(bbr, id, function (err, sectionName) {
         if (err) {
             callback(err);
+        } else if (!sectionName) {
+            var missingMsg = util.format('No resource with id %s', id);
+            callback(errUtil.error('readMissing', missingMsg));
         } else {
             if (sectionName === 'vitals') {
                 libraryVitals.read(bbr, id, callback);

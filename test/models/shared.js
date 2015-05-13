@@ -51,7 +51,7 @@ methods.createDbError = function (model, sample, method) {
             arguments[arguments.length - 1](new Error(method));
         });
 
-        model.create(bbr, sample, function (err, id) {
+        model.create(bbr, sample, function (err) {
             expect(err).to.exist;
             expect(err.codeDetail).to.exist;
             expect(err.codeDetail.key).to.equal('internalDbError');
@@ -137,7 +137,7 @@ methods.searchByPatient = function (model, sample, map, count) {
 methods.read = function (model, sample) {
     var patientRefKey = this.patientRefKey;
     return function (done) {
-        var id = sample.id;
+        var id = sample.id.toString();
         model.read(bbr, id, function (err, resource) {
             if (err) {
                 done(err);
@@ -146,6 +146,38 @@ methods.read = function (model, sample) {
                 expect(resource).to.deep.equal(sample);
                 done();
             }
+        });
+    };
+};
+
+methods.readMissing = function (model, id) {
+    return function (done) {
+        model.read(bbr, id, function (err, resource) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('readMissing');
+            done();
+        });
+    };
+};
+
+methods.readDbError = function (model, sample, method, stubFn) {
+    return function (done) {
+        if (!stubFn) {
+            stubFn = function () {
+                arguments[arguments.length - 1](new Error(method));
+            };
+        }
+        var stub = sinon.stub(bbr, method, stubFn);
+
+        var id = sample.id.toString();
+        model.read(bbr, id, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('internalDbError');
+            expect(err.message).to.equal(method);
+            stub.restore();
+            done();
         });
     };
 };

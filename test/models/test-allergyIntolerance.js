@@ -37,7 +37,7 @@ describe('models allergyIntolerance', function () {
     });
 
     it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSource'));
-    it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSection'));
+    it('create db error simulation, saveSection', shared.createDbError(model, samplesSet0[0], 'saveSection'));
 
     var entryMapById = {};
     var entryIds = [];
@@ -64,6 +64,11 @@ describe('models allergyIntolerance', function () {
 
     it('search by patient-0', shared.searchByPatient(model, patientSamples[0], entryMapById, samplesSet0.length));
     it('search by patient-1', shared.searchByPatient(model, patientSamples[1], entryMapById, samplesSet1.length));
+
+    it('read invalid id', shared.readMissing(model, 'abc'));
+    it('read valid id missing', shared.readMissing(model, '123456789012345678901234'));
+    it('read db error simulation, idToPatientInfo', shared.readDbError(model, samplesSet0[0], 'idToPatientInfo'));
+    it('read db error simulation, getEntry', shared.readDbError(model, samplesSet0[0], 'getEntry'));
 
     _.range(samplesSet0.length).forEach(function (i) {
         it('read for patient-0 ' + i, shared.read(model, samplesSet0[i]));

@@ -17,7 +17,7 @@ var methods = {};
 module.exports = function (options) {
     var result = Object.create(methods);
     result.sectionName = options.sectionName;
-    result.patientRefKey = options.patientRefKey || 'subject';
+    result.patientRefKey = options.patientRefKey;
     return result;
 };
 
@@ -134,11 +134,14 @@ methods.read = function (bbr, id, callback) {
     var patientRefKey = this.patientRefKey;
     bbr.idToPatientInfo(sectionName, id, function (err, patientInfo) {
         if (err) {
-            callback(err);
+            callback(errUtil.error('internalDbError', err.message));
+        } else if (!patientInfo) {
+            var missingMsg = util.format('No resource with id %s', id);
+            callback(errUtil.error('readMissing', missingMsg));
         } else {
             bbr.getEntry(sectionName, patientInfo.key, id, function (err, result) {
                 if (err) {
-                    callback(err);
+                    callback(errUtil.error('internalDbError', err.message));
                 } else {
                     var resource = bbGenFhir.entryToResource(sectionName, result);
                     resource.id = result._id.toString();

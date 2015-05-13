@@ -82,6 +82,18 @@ describe('models observation result', function () {
     it('search by patient-0', shared.searchByPatient(model, patientSamples[0], entryMapById, samplesSet0.length));
     it('search by patient-1', shared.searchByPatient(model, patientSamples[1], entryMapById, samplesSet1.length));
 
+    it('read invalid id', shared.readMissing(model, 'abc'));
+    it('read valid id missing', shared.readMissing(model, '123456789012345678901234'));
+    it('read db error simulation, idToPatientInfo', shared.readDbError(model, samplesSet0[0], 'idToPatientInfo'));
+    it('read db error simulation, getEntry', shared.readDbError(model, samplesSet0[0], 'getEntry'));
+    it('read db error simulation, idToPatientInfo (2)', shared.readDbError(model, samplesSet0[0], 'idToPatientInfo', function (secName) {
+        if (secName === 'vitals') {
+            arguments[arguments.length - 1](null, null);
+        } else {
+            arguments[arguments.length - 1](new Error('idToPatientInfo'));
+        }
+    }));
+
     _.range(samplesSet0.length).forEach(function (i) {
         it('read for patient-0 ' + i, shared.read(model, samplesSet0[i]));
     });
