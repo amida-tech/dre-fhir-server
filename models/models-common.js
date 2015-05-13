@@ -30,8 +30,24 @@ methods.resourceToModelEntry = function (resource, callback) {
     return result;
 };
 
-methods.create = function (bbr, resource, callback) {
+methods.saveNewResource = function (bbr, ptKey, resource, section, callback) {
     var sectionName = this.sectionName;
+    modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, sourceId) {
+        if (err) {
+            callback(err);
+        } else {
+            bbr.saveSection(sectionName, ptKey, section, sourceId, function (err, id) {
+                if (err) {
+                    callback(errUtil.error('internalDbError', err.message));
+                } else {
+                    callback(null, id.toString());
+                }
+            });
+        }
+    });
+};
+
+methods.create = function (bbr, resource, callback) {
     var entry = this.resourceToModelEntry(resource, callback);
     if (!entry) {
         return;
@@ -43,24 +59,12 @@ methods.create = function (bbr, resource, callback) {
     }
 
     var section = [entry];
-
+    var self = this;
     modelsUtil.findPatientKey(bbr, resource, this.patientRefKey, function (err, ptKey) {
         if (err) {
             callback(err);
         } else {
-            modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, sourceId) {
-                if (err) {
-                    callback(err);
-                } else {
-                    bbr.saveSection(sectionName, ptKey, section, sourceId, function (err, id) {
-                        if (err) {
-                            callback(errUtil.error('internalDbError', err.message));
-                        } else {
-                            callback(null, id.toString());
-                        }
-                    });
-                }
-            });
+            self.saveNewResource(bbr, ptKey, resource, section, callback);
         }
     });
 };

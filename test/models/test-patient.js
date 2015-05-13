@@ -22,6 +22,11 @@ describe('models patient', function () {
 
     var n = samples.length;
 
+    it('create bad resource', shared.createBadResource(model));
+    it('create db error simulation, saveSource', shared.createDbError(model, samples[0], 'saveSource'));
+    it('create db error simulation, saveSection', shared.createDbError(model, samples[0], 'saveSection'));
+    it('create db error simulation, patientKeyToId', shared.createDbError(model, samples[0], 'patientKeyToId'));
+
     _.range(samples.length).forEach(function (i) {
         it('create patient ' + i, shared.create(model, samples[i], [], patients));
     }, this);

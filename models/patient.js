@@ -7,6 +7,7 @@ var bbu = require('blue-button-util');
 
 var modelsUtil = require('./models-util');
 var modelsCommon = require('./models-common');
+var errUtil = require('../lib/error-util');
 
 var library = modelsCommon({
     sectionName: 'demographics'
@@ -19,7 +20,7 @@ var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
     var currPtKey = candidate + (index === 0 ? index : '');
     bbr.patientKeyToId('demographics', currPtKey, function (err, id) {
         if (err) {
-            callback(err);
+            callback(errUtil.error('internalDbError', err.message));
         } else if (!id) {
             callback(null, currPtKey);
         } else {
@@ -30,9 +31,10 @@ var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
 };
 
 exports.create = function (bbr, resource, callback) {
-    var bundle = bundleUtil.toBundle(resource);
-    var model = bbFhir.toModel(bundle);
-    var demographics = model.data.demographics;
+    var demographics = library.resourceToModelEntry(resource, callback);
+    if (!demographics) {
+        return;
+    }
     var name = demographics.name;
     var ptKeyCandidate = name.first.charAt(0).toLowerCase() + name.last.toLowerCase();
 
@@ -40,19 +42,7 @@ exports.create = function (bbr, resource, callback) {
         if (err) {
             callback(err);
         } else {
-            modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, id) {
-                if (err) {
-                    callback(err);
-                } else {
-                    bbr.saveSection('demographics', ptKey, demographics, id, function (err, id) {
-                        if (err) {
-                            callback(err);
-                        } else {
-                            callback(null, id.toString());
-                        }
-                    });
-                }
-            });
+            library.saveNewResource(bbr, ptKey, resource, demographics, callback);
         }
     });
 };
