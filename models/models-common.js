@@ -21,16 +21,19 @@ module.exports = function (options) {
     return result;
 };
 
-methods.resourceToModelEntry = function (resource) {
-    return bbFhir.resourceToModelEntry(resource, this.sectionName);
+methods.resourceToModelEntry = function (resource, callback) {
+    var result = bbFhir.resourceToModelEntry(resource, this.sectionName);
+    if (!result) {
+        var msg = util.format('%s resource cannot be parsed', resource.resourceType);
+        callback(errUtil.error('fhirToModel', msg));
+    }
+    return result;
 };
 
 methods.create = function (bbr, resource, callback) {
     var sectionName = this.sectionName;
-    var entry = this.resourceToModelEntry(resource);
+    var entry = this.resourceToModelEntry(resource, callback);
     if (!entry) {
-        var msg = util.format('%s resource cannot be parsed', resource.resourceType);
-        callback(errUtil.error('fhirToModel', msg));
         return;
     }
     if (resource.related) {
@@ -168,23 +171,24 @@ methods.read = function (bbr, id, callback) {
 
 methods.update = function (bbr, resource, callback) {
     var sectionName = this.sectionName;
-    var entry = this.resourceToModelEntry(resource);
+    var entry = this.resourceToModelEntry(resource, callback);
     if (!entry) {
-        var msg = util.format('%s resource appears to be invalid', resource.resourceType);
-        callback(new Error(msg));
         return;
     }
     bbr.idToPatientInfo(sectionName, resource.id, function (err, patientInfo) {
         if (err) {
-            callback(err);
+            callback(errUtil.error('internalDbError', err.message));
+        } else if (!patientInfo) {
+            var missingMsg = util.format('No resource with id %s', resource.id);
+            callback(errUtil.error('updateMissing', missingMsg));
         } else {
             modelsUtil.saveResourceAsSource(bbr, patientInfo.key, resource, function (err, sourceId) {
                 if (err) {
-                    callback(err);
+                    callback(errUtil.error('internalDbError', err.message));
                 } else {
                     bbr.replaceEntry(sectionName, patientInfo.key, resource.id, sourceId, entry, function (err, id) {
                         if (err) {
-                            callback(err);
+                            callback(errUtil.error('internalDbError', err.message));
                         } else {
                             callback(null);
                         }

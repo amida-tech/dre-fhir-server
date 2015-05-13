@@ -33,6 +33,7 @@ describe('models observation vital', function () {
         shared.assignPatient(samplesSet1, patientSamples[1]);
     });
 
+    it('create bad resource', shared.createBadResource(model));
     it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSource'));
     it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSection'));
 
@@ -94,6 +95,13 @@ describe('models observation vital', function () {
     _.range(samplesSet1.length).forEach(function (i) {
         it('read for patient-1 ' + i, shared.read(model, samplesSet1[i]));
     });
+
+    it('update bad resource', shared.updateBadResource(model, samplesSet0[0]));
+    it('update invalid id', shared.updateMissing(model, samplesSet0[0], 'abc'));
+    it('update valid id missing', shared.updateMissing(model, samplesSet0[0], '123456789012345678901234'));
+    it('update db error simulation, idToPatientInfo', shared.updateDbError(model, samplesSet0[0], 'idToPatientInfo'));
+    it('udpate db error simulation, saveSource', shared.updateDbError(model, samplesSet0[0], 'saveSource'));
+    it('udpate db error simulation, replaceEntry', shared.updateDbError(model, samplesSet0[0], 'replaceEntry'));
 
     it('update values', function () {
         samplesSet0[0].valueQuantity.value += 1;

@@ -85,6 +85,9 @@ exports.update = function (bbr, resource, callback) {
     findSection(bbr, resource.id, function (err, sectionName) {
         if (err) {
             callback(err);
+        } else if (!sectionName) {
+            var missingMsg = util.format('No resource with id %s', resource.id);
+            callback(errUtil.error('updateMissing', missingMsg));
         } else {
             if (sectionName === 'vitals') {
                 libraryVitals.update(bbr, resource, callback);

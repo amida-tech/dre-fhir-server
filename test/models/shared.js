@@ -1,6 +1,7 @@
 'use strict';
 
 var chai = require('chai');
+var _ = require('lodash');
 var sinon = require('sinon');
 var bbr = require('blue-button-record');
 
@@ -62,14 +63,28 @@ methods.createDbError = function (model, sample, method) {
     };
 };
 
+methods.createBadResource = function (model) {
+    return function (done) {
+        var junk = {
+            junk: 'junk'
+        };
+        model.create(bbr, junk, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('fhirToModel');
+            done();
+        });
+    };
+};
+
 methods.create = function (model, sample, list, map) {
     return function (done) {
         model.create(bbr, sample, function (err, id) {
             if (err) {
                 done(err);
             } else {
-                sample.id = id;
-                map[id] = sample;
+                sample.id = id.toString();
+                map[sample.id] = sample;
                 list.push(id);
                 done();
             }
@@ -137,7 +152,7 @@ methods.searchByPatient = function (model, sample, map, count) {
 methods.read = function (model, sample) {
     var patientRefKey = this.patientRefKey;
     return function (done) {
-        var id = sample.id.toString();
+        var id = sample.id;
         model.read(bbr, id, function (err, resource) {
             if (err) {
                 done(err);
@@ -170,7 +185,7 @@ methods.readDbError = function (model, sample, method, stubFn) {
         }
         var stub = sinon.stub(bbr, method, stubFn);
 
-        var id = sample.id.toString();
+        var id = sample.id;
         model.read(bbr, id, function (err) {
             expect(err).to.exist;
             expect(err.codeDetail).to.exist;
@@ -198,6 +213,39 @@ methods.readNegative = function (model, sample) {
     };
 };
 
+methods.updateMissing = function (model, sample, badId) {
+    return function (done) {
+        var sampleClone = _.cloneDeep(sample);
+        sampleClone.id = badId;
+        model.update(bbr, sampleClone, function (err, resource) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('updateMissing');
+            done();
+        });
+    };
+};
+
+methods.updateDbError = function (model, sample, method, stubFn) {
+    return function (done) {
+        if (!stubFn) {
+            stubFn = function () {
+                arguments[arguments.length - 1](new Error(method));
+            };
+        }
+        var stub = sinon.stub(bbr, method, stubFn);
+
+        model.update(bbr, sample, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('internalDbError');
+            expect(err.message).to.equal(method);
+            stub.restore();
+            done();
+        });
+    };
+};
+
 methods.update = function (model, sample) {
     return function (done) {
         model.update(bbr, sample, function (err) {
@@ -206,6 +254,21 @@ methods.update = function (model, sample) {
             } else {
                 done();
             }
+        });
+    };
+};
+
+methods.updateBadResource = function (model, sample) {
+    return function (done) {
+        var junk = {
+            id: sample.id.toString(),
+            junk: 'junk'
+        };
+        model.update(bbr, junk, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('fhirToModel');
+            done();
         });
     };
 };
