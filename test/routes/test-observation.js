@@ -98,12 +98,18 @@ describe(testTitle, function () {
         it(title, fnPt(r, r.search, patientSamples[i], patientProperty, resourceSets[i].length));
     }, this);
 
+    it('read missing (invalid id)', fn(r, r.readMissing, 'abc'));
+    it('read missing (valid id)', fn(r, r.readMissing, '123456789012345678901234'));
+
     _.range(nSets).forEach(function (i) {
         _.range(resourceSets[i].length).forEach(function (j) {
             var title = util.format('read resource %s for patient %s', j, i);
             it(title, fn(r, r.read, resourceSets[i][j]));
         }, this);
     }, this);
+
+    it('update missing (invalid id)', fn(r, r.updateMissing, [resourceSets[0][0], 'abc']));
+    it('udpate missing (valid id)', fn(r, r.updateMissing, [resourceSets[0][0], '123456789012345678901234']));
 
     _.range(nSets).forEach(function (i) {
         it(util.format('update local resource 0 for patient %s', i), function () {
@@ -117,6 +123,9 @@ describe(testTitle, function () {
         it('update resource 0' + ptTitle, fn(r, r.update, resourceSets[i][0]));
         it('read resource 0' + ptTitle, fn(r, r.read, resourceSets[i][0]));
     }, this);
+
+    it('delete missing (invalid id)', fn(r, r.deleteMissing, 'abc'));
+    it('delete missing (valid id)', fn(r, r.deleteMissing, '123456789012345678901234'));
 
     _.range(nSets).forEach(function (i) {
         var nLast = resourceSets[i].length - 1;

@@ -90,10 +90,16 @@ describe(testTitle, function () {
         birthDate: '>=' + bbMiddle
     }]));
 
+    it('read missing (invalid id)', fn(r, r.readMissing, 'abc'));
+    it('read missing (valid id)', fn(r, r.readMissing, '123456789012345678901234'));
+
     _.range(n).forEach(function (i) {
         var title = util.format('read resource %s', i);
         it(title, fn(r, r.read, resources[i]));
     }, this);
+
+    it('update missing (invalid id)', fn(r, r.updateMissing, [resources[0], 'abc']));
+    it('udpate missing (valid id)', fn(r, r.updateMissing, [resources[0], '123456789012345678901234']));
 
     it('update local resource 0', function () {
         resources[0].gender = 'female';
@@ -108,6 +114,9 @@ describe(testTitle, function () {
         it(util.format('update resource %s', i), fn(r, r.update, resources[i]));
         it(util.format('read resource %s', i), fn(r, r.read, resources[i]));
     });
+
+    it('delete missing (invalid id)', fn(r, r.deleteMissing, 'abc'));
+    it('delete missing (valid id)', fn(r, r.deleteMissing, '123456789012345678901234'));
 
     it('delete last resource', fn(r, r.delete, resources[n - 1]));
     it('delete next to last resource', fn(r, r.delete, resources[n - 2]));

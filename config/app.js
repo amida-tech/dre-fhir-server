@@ -36,7 +36,11 @@ module.exports = function (overrideConfig) {
         'strict': false
     }));
 
-    app.use(dbmw(config));
+    if (config.dbware) {
+        app.use(config.dbware);
+    } else {
+        app.use(dbmw(config));
+    }
     app.use(config.server.fhirUrl, routerFactory(config.conformance));
 
     app.get('/config', function (req, res) {

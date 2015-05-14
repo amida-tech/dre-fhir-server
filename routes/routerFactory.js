@@ -5,6 +5,7 @@ var path = require('path');
 var util = require('util');
 
 var fpp = require('../middleware/fhir-param-parser');
+var errUtil = require('../lib/error-util');
 
 module.exports = (function () {
     var interactionToRoute = function (resourceType) {
@@ -37,6 +38,13 @@ module.exports = (function () {
         };
     };
 
+    var handleError = function (res, err) {
+        var statusCode = errUtil.toStatus(err);
+        res.status(statusCode);
+        var operationOutcome = errUtil.toOperationOutcome(err);
+        res.send(operationOutcome);
+    };
+
     var interactionImplementation = {
         'read': function (model) {
             return function (req, res) {
@@ -45,8 +53,7 @@ module.exports = (function () {
 
                 model.read(c, id, function (err, resource) {
                     if (err) {
-                        res.status(500);
-                        res.send(err);
+                        handleError(res, err);
                     } else {
                         res.status(200);
                         res.send(resource);
@@ -62,8 +69,7 @@ module.exports = (function () {
 
                 model.update(c, patient, function (err) {
                     if (err) {
-                        res.status(500);
-                        res.send(err);
+                        handleError(res, err);
                     } else {
                         res.status(200);
                         res.send();
@@ -78,8 +84,7 @@ module.exports = (function () {
 
                 model.delete(c, id, function (err, resource) {
                     if (err) {
-                        res.status(500);
-                        res.send(err);
+                        handleError(res, err);
                     } else {
                         res.status(200);
                         res.send();
@@ -94,8 +99,7 @@ module.exports = (function () {
                 var c = req.app.get('connection');
                 model.create(c, patient, function (err, id) {
                     if (err) {
-                        res.status(400);
-                        res.send(err);
+                        handleError(res, err);
                     } else {
                         var location = [req.baseUrl, resourceType, id, '_history', '1'].join('/');
                         res.status(201);
@@ -114,8 +118,7 @@ module.exports = (function () {
                     var params = req.fhirParams || {};
                     model.search(c, params, function (err, bundle) {
                         if (err) {
-                            res.status(500);
-                            res.send(err);
+                            handleError(res, err);
                         } else {
                             res.status(200);
                             Object.keys(req.query).forEach(function (key) {
