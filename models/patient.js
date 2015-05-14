@@ -1,5 +1,7 @@
 'use strict';
 
+var util = require('util');
+
 var bundleUtil = require('../lib/bundle-util');
 var bbFhir = require('blue-button-fhir');
 var bbGenFhir = require('blue-button-gen-fhir');
@@ -57,7 +59,7 @@ exports.search = function (bbr, params, callback) {
     var bbrParams = params ? paramsToBBRParams(params, paramToBBRParamMap) : {};
     bbr.getMultiSection('demographics', bbrParams, false, function (err, results) {
         if (err) {
-            callback(err);
+            callback(errUtil.error('internalDbError', err.message));
         } else {
             var bundleEntry = results.map(function (result) {
                 var bundle = bbGenFhir.demographicsToFHIR(result);
@@ -76,14 +78,23 @@ exports.search = function (bbr, params, callback) {
 };
 
 exports.read = function (bbr, id, callback) {
-    bbr.getEntry('demographics', null, id, function (err, result) {
+    bbr.idToPatientKey('demographics', id, function (err, ptKey) {
         if (err) {
-            callback(err);
+            callback(errUtil.error('internalDbError', err.message));
+        } else if (!ptKey) {
+            var missingMsg = util.format('No resource with id %s', id);
+            callback(errUtil.error('readMissing', missingMsg));
         } else {
-            var bundle = bbGenFhir.demographicsToFHIR(result);
-            var resource = bundle.entry[0].resource;
-            resource.id = id;
-            callback(null, resource);
+            bbr.getEntry('demographics', ptKey, id, function (err, result) {
+                if (err) {
+                    callback(errUtil.error('internalDbError', err.message));
+                } else {
+                    var bundle = bbGenFhir.demographicsToFHIR(result);
+                    var resource = bundle.entry[0].resource;
+                    resource.id = id;
+                    callback(null, resource);
+                }
+            });
         }
     });
 };

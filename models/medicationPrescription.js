@@ -18,9 +18,7 @@ library.resourceToModelEntry = function (resource, callback) {
     var model = bbFhir.toModel(bundle);
     if (model && model.data && model.data.medications) {
         var medication = model.data.medications[0];
-        if (medication) {
-            return medication;
-        }
+        return medication;
     }
     var msg = util.format('%s resource cannot be parsed', resource.resourceType);
     callback(errUtil.error('fhirToModel', msg));

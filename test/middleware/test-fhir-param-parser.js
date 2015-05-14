@@ -36,6 +36,31 @@ describe('fhir-param-parser', function () {
         });
     });
 
+    it('missing param', function () {
+        var spec = [{
+            name: 'param0',
+            type: 'string'
+        }, {
+            name: 'param1',
+            type: 'string'
+        }];
+        var fn = fpp(spec);
+        var noop = function () {};
+        var req = {
+            query: {
+                param0: 'value0',
+                param2: 'value2'
+            }
+        };
+        fn(req, null, noop);
+        expect(req.fhirParams).to.deep.equal({
+            param0: {
+                value: 'value0',
+                type: 'string'
+            }
+        });
+    });
+
     it('modifiers', function () {
         var spec = [{
             name: 'param0',

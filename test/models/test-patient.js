@@ -32,6 +32,12 @@ describe('models patient', function () {
     }, this);
 
     it('search (no param)', shared.search(model, null, patients, n));
+    it('search (nor supported param)', shared.search(model, {
+        unsupported: {
+            value: "not"
+        }
+    }, patients, n));
+    it('search db error simulation, getMultiSection', shared.searchDbError(model, null, 'getMultiSection'));
 
     _.range(samples.length).forEach(function (i) {
         it('search patient ' + i + ' by id', shared.searchById(model, samples[i], patients, 1));
@@ -76,6 +82,11 @@ describe('models patient', function () {
     it('search by birthDate existing <=', shared.search(model, bd(bbMiddle, '<='), patients, bbMiddleIndex + 1));
     it('search by birthDate existing >', shared.search(model, bd(bbMiddle, '>'), patients, n - bbMiddleIndex - 1));
     it('search by birthDate existing >=', shared.search(model, bd(bbMiddle, '>='), patients, n - bbMiddleIndex));
+
+    it('read invalid id', shared.readMissing(model, 'abc'));
+    it('read valid id missing', shared.readMissing(model, '123456789012345678901234'));
+    it('read db error simulation, idToPatientKey', shared.readDbError(model, samples[0], 'idToPatientKey'));
+    it('read db error simulation, getEntry', shared.readDbError(model, samples[0], 'getEntry'));
 
     _.range(samples.length).forEach(function (i) {
         it('read for patient ' + i, shared.read(model, samples[i]));

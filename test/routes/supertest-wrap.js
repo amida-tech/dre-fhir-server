@@ -3,6 +3,7 @@
 var util = require('util');
 
 var chai = require('chai');
+var _ = require('lodash');
 
 var expect = chai.expect;
 
@@ -36,8 +37,8 @@ base.config = function (done) {
 base.createNegative = function (sample, done) {
     var path = util.format('/fhir/%s', this.resourceType);
     this.api.post(path)
-        .send(sample)
         .expect(400)
+        .send(sample)
         .end(done);
 };
 
@@ -81,6 +82,14 @@ base.read = function (sample, done) {
         .end(done);
 };
 
+base.readMissing = function (id, done) {
+    var self = this;
+    var path = util.format('/fhir/%s/%s', this.resourceType, id);
+    this.api.get(path)
+        .expect(404)
+        .end(done);
+};
+
 base.readNegative = function (sample, done) {
     var self = this;
     var id = sample.id;
@@ -112,12 +121,29 @@ base.delete = function (sample, done) {
         .end(done);
 };
 
+base.deleteMissing = function (id, done) {
+    var path = util.format('/fhir/%s/%s', this.resourceType, id);
+    this.api.delete(path)
+        .expect(404)
+        .end(done);
+};
+
 base.update = function (sample, done) {
     var id = sample.id;
     var path = util.format('/fhir/%s/%s', this.resourceType, id);
     this.api.put(path)
         .send(sample)
         .expect(200)
+        .end(done);
+};
+
+base.updateMissing = function (sample, badId, done) {
+    var sampleClone = _.cloneDeep(sample);
+    sampleClone.id = badId;
+    var path = util.format('/fhir/%s/%s', this.resourceType, badId);
+    this.api.put(path)
+        .send(sampleClone)
+        .expect(404)
         .end(done);
 };
 
