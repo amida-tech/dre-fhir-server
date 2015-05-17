@@ -11,7 +11,7 @@ var modelsUtil = require('./models-util');
 var modelsCommon = require('./models-common');
 var errUtil = require('../lib/error-util');
 
-var library = modelsCommon({
+module.exports = exports = modelsCommon({
     sectionName: 'demographics'
 });
 
@@ -33,7 +33,7 @@ var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
 };
 
 exports.create = function (bbr, resource, callback) {
-    var demographics = library.resourceToModelEntry(resource, callback);
+    var demographics = exports.resourceToModelEntry(resource, callback);
     if (!demographics) {
         return;
     }
@@ -44,7 +44,7 @@ exports.create = function (bbr, resource, callback) {
         if (err) {
             callback(err);
         } else {
-            library.saveNewResource(bbr, ptKey, resource, demographics, callback);
+            exports.saveNewResource(bbr, ptKey, resource, demographics, callback);
         }
     });
 };
@@ -97,12 +97,4 @@ exports.read = function (bbr, id, callback) {
             });
         }
     });
-};
-
-exports.update = function (bbr, resource, callback) {
-    library.update(bbr, resource, callback);
-};
-
-exports.delete = function (bbr, id, callback) {
-    library.delete(bbr, id, callback);
 };
