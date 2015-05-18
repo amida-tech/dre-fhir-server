@@ -2,6 +2,7 @@
 
 var util = require('util');
 var _ = require('lodash');
+var moment = require('moment');
 
 var vitalSamples = require('../samples/observation-vital-samples');
 var resultSamples = require('../samples/observation-result-samples');
@@ -38,6 +39,7 @@ describe(testTitle, function () {
     resourceSets[1].panelStart = vitalSamples.panelStart1;
     resourceSets[2].panelStart = resultSamples.panelStart0;
     resourceSets[3].panelStart = resultSamples.panelStart1;
+    var momentStart = moment();
 
     var nSets = resourceSets.length;
 
@@ -104,7 +106,7 @@ describe(testTitle, function () {
     _.range(nSets).forEach(function (i) {
         _.range(resourceSets[i].length).forEach(function (j) {
             var title = util.format('read resource %s for patient %s', j, i);
-            it(title, fn(r, r.read, resourceSets[i][j]));
+            it(title, fn(r, r.read, [resourceSets[i][j], momentStart, '1']));
         }, this);
     }, this);
 
@@ -121,7 +123,7 @@ describe(testTitle, function () {
         var ptTitle = util.format(' for patient %s', i);
         it('detect resource 0 not on server' + ptTitle, fn(r, r.readNegative, resourceSets[i][0]));
         it('update resource 0' + ptTitle, fn(r, r.update, resourceSets[i][0]));
-        it('read resource 0' + ptTitle, fn(r, r.read, resourceSets[i][0]));
+        it('read resource 0' + ptTitle, fn(r, r.read, [resourceSets[i][0], momentStart, '2']));
     }, this);
 
     it('delete missing (invalid id)', fn(r, r.deleteMissing, 'abc'));

@@ -4,6 +4,7 @@ var util = require('util');
 
 var chai = require('chai');
 var _ = require('lodash');
+var moment = require('moment');
 
 var expect = chai.expect;
 
@@ -66,7 +67,7 @@ base.create = function (sample, done) {
         .end(done);
 };
 
-base.read = function (sample, done) {
+base.read = function (sample, momentStart, versionId, done) {
     var self = this;
     var id = sample.id;
     var path = util.format('/fhir/%s/%s', this.resourceType, id);
@@ -77,7 +78,15 @@ base.read = function (sample, done) {
             if (self.readTransform) {
                 self.readTransform(resource);
             }
+            var meta = resource.meta;
+            expect(meta).to.exist;
+            delete resource.meta;
             expect(resource).to.deep.equal(sample);
+            expect(meta.versionId).to.equal(versionId);
+            var momentMeta = moment(meta.lastUpdated);
+            expect(momentMeta.isValid()).to.equal(true);
+            var momentNow = moment();
+            expect(momentMeta.isBetween(momentStart, momentNow)).to.equal(true);
         })
         .end(done);
 };
@@ -101,6 +110,7 @@ base.readNegative = function (sample, done) {
             if (self.readTransform) {
                 self.readTransform(resource);
             }
+            delete resource.meta;
             expect(resource).to.not.deep.equal(sample);
         })
         .end(done);

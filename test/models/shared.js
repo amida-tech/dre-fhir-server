@@ -3,6 +3,7 @@
 var chai = require('chai');
 var _ = require('lodash');
 var sinon = require('sinon');
+var moment = require('moment');
 var bbr = require('blue-button-record');
 
 var patientModel = require('../../models/patient');
@@ -213,7 +214,7 @@ methods.searchByMissingPatient = function (model, id, map) {
     };
 };
 
-methods.read = function (model, sample) {
+methods.read = function (model, sample, momentStart, versionId) {
     var patientRefKey = this.patientRefKey;
     return function (done) {
         var id = sample.id;
@@ -221,10 +222,20 @@ methods.read = function (model, sample) {
             if (err) {
                 done(err);
             } else {
+                var meta = resource.meta;
+                expect(meta).to.exist;
+                expect(meta.versionId).to.exist;
+                expect(meta.lastUpdated).to.exist;
+                delete resource.meta;
                 if (patientRefKey) {
                     delete resource[patientRefKey].display;
                 }
                 expect(resource).to.deep.equal(sample);
+                expect(versionId).to.equal(meta.versionId);
+                var momentMeta = moment(meta.lastUpdated);
+                expect(momentMeta.isValid()).to.equal(true);
+                var momentNow = moment();
+                expect(momentMeta.isBetween(momentStart, momentNow)).to.equal(true);
                 done();
             }
         });
@@ -271,6 +282,7 @@ methods.readNegative = function (model, sample) {
             if (err) {
                 done(err);
             } else {
+                delete resource.meta;
                 if (patientRefKey) {
                     delete resource[patientRefKey].display;
                 }

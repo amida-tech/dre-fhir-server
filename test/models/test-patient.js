@@ -2,6 +2,7 @@
 
 var chai = require('chai');
 var _ = require('lodash');
+var moment = require('moment');
 var bbr = require('blue-button-record');
 
 var model = require('../../models/patient');
@@ -17,6 +18,7 @@ describe('models patient', function () {
     var sample0Clone = _.cloneDeep(samples[0]);
     sample0Clone.birthDate = '1978-06-09';
     samples.push(sample0Clone);
+    var momentStart = moment();
 
     var patients = {};
 
@@ -89,7 +91,7 @@ describe('models patient', function () {
     it('read db error simulation, getEntry', shared.readDbError(model, samples[0], 'getEntry'));
 
     _.range(samples.length).forEach(function (i) {
-        it('read for patient ' + i, shared.read(model, samples[i]));
+        it('read for patient ' + i, shared.read(model, samples[i], momentStart, '1'));
     }, this);
 
     it('update bad resource', shared.updateBadResource(model, samples[0]));
@@ -110,7 +112,7 @@ describe('models patient', function () {
     _.range(2).forEach(function (i) {
         it('detect updated patient ' + i + ' not equal db', shared.readNegative(model, samples[i]));
         it('update patient ' + i, shared.update(model, samples[i]));
-        it('read updated patient ' + i, shared.read(model, samples[i]));
+        it('read updated patient ' + i, shared.read(model, samples[i], momentStart, '2'));
     }, this);
 
     it('delete invalid id', shared.deleteMissing(model, 'abc'));

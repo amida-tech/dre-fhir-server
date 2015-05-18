@@ -2,6 +2,7 @@
 
 var util = require('util');
 var _ = require('lodash');
+var moment = require('moment');
 
 var samples = require('../samples/patient-samples');
 var supertestWrap = require('./supertest-wrap');
@@ -26,6 +27,7 @@ describe(testTitle, function () {
     var resource0Clone = _.cloneDeep(resources[0]);
     resource0Clone.birthDate = '1978-06-09';
     resources.push(resource0Clone);
+    var momentStart = moment();
 
     before(fn(appw, appw.start));
 
@@ -95,7 +97,7 @@ describe(testTitle, function () {
 
     _.range(n).forEach(function (i) {
         var title = util.format('read resource %s', i);
-        it(title, fn(r, r.read, resources[i]));
+        it(title, fn(r, r.read, [resources[i], momentStart, '1']));
     }, this);
 
     it('update missing (invalid id)', fn(r, r.updateMissing, [resources[0], 'abc']));
@@ -112,7 +114,7 @@ describe(testTitle, function () {
     _.range(2).forEach(function (i) {
         it(util.format('detect local resource %s not on server', i), fn(r, r.readNegative, resources[i]));
         it(util.format('update resource %s', i), fn(r, r.update, resources[i]));
-        it(util.format('read resource %s', i), fn(r, r.read, resources[i]));
+        it(util.format('read resource %s', i), fn(r, r.read, [resources[i], momentStart, '2']));
     });
 
     it('delete missing (invalid id)', fn(r, r.deleteMissing, 'abc'));

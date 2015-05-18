@@ -1,6 +1,7 @@
 'use strict';
 
 var chai = require('chai');
+var moment = require('moment');
 var bbr = require('blue-button-record');
 
 var model = require('../../models/observation');
@@ -20,6 +21,7 @@ describe('models observation vital', function () {
 
     var samplesSet0 = samples.set0();
     var samplesSet1 = samples.set1();
+    var momentStart = moment();
 
     it('detect missing patient', shared.detectMissingPatient(model, samplesSet0[0]));
 
@@ -98,11 +100,11 @@ describe('models observation vital', function () {
     it('read db error simulation, getEntry', shared.readDbError(model, samplesSet0[0], 'getEntry'));
 
     _.range(samplesSet0.length).forEach(function (i) {
-        it('read for patient-0 ' + i, shared.read(model, samplesSet0[i]));
+        it('read for patient-0 ' + i, shared.read(model, samplesSet0[i], momentStart, '1'));
     });
 
     _.range(samplesSet1.length).forEach(function (i) {
-        it('read for patient-1 ' + i, shared.read(model, samplesSet1[i]));
+        it('read for patient-1 ' + i, shared.read(model, samplesSet1[i], momentStart, '1'));
     });
 
     it('update bad resource', shared.updateBadResource(model, samplesSet0[0]));
@@ -119,10 +121,10 @@ describe('models observation vital', function () {
 
     it('detect updated not equal db for patient-0', shared.readNegative(model, samplesSet0[0]));
     it('update for patient-0', shared.update(model, samplesSet0[0]));
-    it('read updated for patient-0', shared.read(model, samplesSet0[0]));
+    it('read updated for patient-0', shared.read(model, samplesSet0[0], momentStart, '2'));
     it('detect updated not equal db for patient-1', shared.readNegative(model, samplesSet1[0]));
     it('update for patient-1', shared.update(model, samplesSet1[0]));
-    it('read updated for patient-1', shared.read(model, samplesSet1[0]));
+    it('read updated for patient-1', shared.read(model, samplesSet1[0], momentStart, '2'));
 
     var n0 = samplesSet0.length - 1;
     var n1 = samplesSet1.length - 1;

@@ -164,10 +164,16 @@ methods.read = function (bbr, id, callback) {
                         var msg = util.format('Entry for %s cannot be converted to a resource', sectionName);
                         callback(errUtil.error('internalDbError', msg));
                     } else {
-                        resource.id = result._id.toString();
+                        resource.id = id;
                         resource[patientRefKey] = {
                             reference: patientInfo.reference,
                             display: patientInfo.display
+                        };
+                        var metaAttr = result.metadata.attribution;
+                        var versionId = metaAttr.length;
+                        resource.meta = {
+                            lastUpdated: metaAttr[versionId - 1].merged.toISOString(),
+                            versionId: versionId.toString()
                         };
                         if (result._components && result._components.length) {
                             resource.related = result._components.map(function (component) {

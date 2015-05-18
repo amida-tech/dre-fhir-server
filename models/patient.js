@@ -95,6 +95,12 @@ exports.read = function (bbr, id, callback) {
                         callback(errUtil.error('internalDbError', msg));
                     } else {
                         resource.id = id;
+                        var metaAttr = result.metadata.attribution;
+                        var versionId = metaAttr.length;
+                        resource.meta = {
+                            lastUpdated: metaAttr[versionId - 1].merged.toISOString(),
+                            versionId: versionId.toString()
+                        };
                         callback(null, resource);
                     }
                 }
