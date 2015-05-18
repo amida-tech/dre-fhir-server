@@ -89,10 +89,14 @@ exports.read = function (bbr, id, callback) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
-                    var bundle = bbGenFhir.demographicsToFHIR(result);
-                    var resource = bundle.entry[0].resource;
-                    resource.id = id;
-                    callback(null, resource);
+                    var resource = bbGenFhir.entryToResource('demographics', result.data);
+                    if (!resource) {
+                        var msg = util.format('Entry for %s cannot be converted to a resource', 'demographics');
+                        callback(errUtil.error('internalDbError', msg));
+                    } else {
+                        resource.id = id;
+                        callback(null, resource);
+                    }
                 }
             });
         }

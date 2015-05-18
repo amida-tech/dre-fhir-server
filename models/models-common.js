@@ -159,23 +159,28 @@ methods.read = function (bbr, id, callback) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
-                    var resource = bbGenFhir.entryToResource(sectionName, result);
-                    resource.id = result._id.toString();
-                    resource[patientRefKey] = {
-                        reference: patientInfo.reference,
-                        display: patientInfo.display
-                    };
-                    if (result._components && result._components.length) {
-                        resource.related = result._components.map(function (component) {
-                            return {
-                                target: {
-                                    reference: component.toString()
-                                },
-                                type: "has-component"
-                            };
-                        });
+                    var resource = bbGenFhir.entryToResource(sectionName, result.data);
+                    if (!resource) {
+                        var msg = util.format('Entry for %s cannot be converted to a resource', sectionName);
+                        callback(errUtil.error('internalDbError', msg));
+                    } else {
+                        resource.id = result._id.toString();
+                        resource[patientRefKey] = {
+                            reference: patientInfo.reference,
+                            display: patientInfo.display
+                        };
+                        if (result._components && result._components.length) {
+                            resource.related = result._components.map(function (component) {
+                                return {
+                                    target: {
+                                        reference: component.toString()
+                                    },
+                                    type: "has-component"
+                                };
+                            });
+                        }
+                        callback(null, resource);
                     }
-                    callback(null, resource);
                 }
             });
         }

@@ -23,7 +23,7 @@ methods.connectDatabase = function (dbName) {
     return function (done) {
         bbr.connectDatabase('localhost', {
             dbName: dbName,
-            bundle_sections: ['vitals']
+            skipCleanDoc: true
         }, function (err) {
             if (err) {
                 done(err);

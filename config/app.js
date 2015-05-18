@@ -17,8 +17,10 @@ var dbmw = function (config) {
         if (initialized) {
             next();
         } else {
-
-            bbr.connectDatabase(config.server.host, config.db, function (err) {
+            var dbConfig = _.assign({}, config.db, {
+                skipCleanDoc: true
+            });
+            bbr.connectDatabase(config.server.host, dbConfig, function (err) {
                 req.app.set('connection', bbr);
                 initialized = true;
                 next(err);
