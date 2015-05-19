@@ -61,17 +61,26 @@ module.exports = (function () {
                 });
             };
         },
-        'update': function (model) {
+        'update': function (model, resourceType) {
             return function (req, res) {
                 var patient = req.body;
                 var c = req.app.get('connection');
                 var id = req.params.id;
 
-                model.update(c, patient, function (err) {
+                model.update(c, patient, function (err, updateInfo) {
                     if (err) {
                         handleError(res, err);
                     } else {
-                        res.status(200);
+                        var contentLocation = [req.baseUrl, resourceType, updateInfo.id, '_history', updateInfo.versionId].join('/');
+                        res.header('etag', updateInfo.versionId);
+                        res.header('content-location', contentLocation);
+                        res.header('last-modified', updateInfo.lastUpdated);
+                        if (updateInfo.isCreated) {
+                            res.status(201);
+                            res.header('location', contentLocation);
+                        } else {
+                            res.status(200);
+                        }
                         res.send();
                     }
                 });
@@ -97,14 +106,16 @@ module.exports = (function () {
             return function (req, res) {
                 var patient = req.body;
                 var c = req.app.get('connection');
-                model.create(c, patient, function (err, id) {
+                model.create(c, patient, function (err, createInfo) {
                     if (err) {
                         handleError(res, err);
                     } else {
-                        var location = [req.baseUrl, resourceType, id, '_history', '1'].join('/');
+                        var location = [req.baseUrl, resourceType, createInfo.id, '_history', '1'].join('/');
                         res.status(201);
-                        res.location(location);
-                        res.header('ETag', '1');
+                        res.header('location', location);
+                        res.header('content-location', location);
+                        res.header('last-modified', createInfo.lastUpdated);
+                        res.header('etag', '1');
                         res.send();
                     }
                 });

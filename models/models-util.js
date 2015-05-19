@@ -30,12 +30,12 @@ exports.findPatientKey = function (connection, resource, patientProperty, callba
     if (!reference) {
         callback(errUtil.error('createPatientMissing', 'No patient specified'));
     } else {
-        connection.idToPatientKey('demographics', reference, function (err, ptKey) {
+        connection.idToPatientKey('demographics', reference, function (err, keyInfo) {
             if (err) {
                 callback(errUtil.error('internalDbError', err.message));
             } else {
-                if (ptKey) {
-                    callback(null, ptKey);
+                if (keyInfo && !keyInfo.invalid) {
+                    callback(null, keyInfo.key);
                 } else {
                     var missingMsg = util.format('No patient resource with id %s', reference);
                     callback(errUtil.error('createPatientMissing', missingMsg));

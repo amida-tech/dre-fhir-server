@@ -32,7 +32,7 @@ var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
     });
 };
 
-exports.create = function (bbr, resource, callback) {
+exports.createShared = function (bbr, resource, id, callback) {
     var demographics = exports.resourceToModelEntry(resource, callback);
     if (!demographics) {
         return;
@@ -44,9 +44,16 @@ exports.create = function (bbr, resource, callback) {
         if (err) {
             callback(err);
         } else {
+            if (id) {
+                demographics._id = id;
+            }
             exports.saveNewResource(bbr, ptKey, resource, demographics, callback);
         }
     });
+};
+
+exports.create = function (bbr, resource, callback) {
+    this.createShared(bbr, resource, null, callback);
 };
 
 var paramToBBRParamMap = {
@@ -78,14 +85,14 @@ exports.search = function (bbr, params, callback) {
 };
 
 exports.read = function (bbr, id, callback) {
-    bbr.idToPatientKey('demographics', id, function (err, ptKey, removed) {
+    bbr.idToPatientKey('demographics', id, function (err, keyInfo) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
-        } else if (!ptKey) {
+        } else if (!keyInfo || keyInfo.invalid) {
             var missingMsg = util.format('No resource with id %s', id);
             callback(errUtil.error('readMissing', missingMsg));
         } else {
-            bbr.getEntry('demographics', ptKey, id, function (err, result) {
+            bbr.getEntry('demographics', keyInfo.key, id, function (err, result) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
@@ -98,7 +105,7 @@ exports.read = function (bbr, id, callback) {
                         var metaAttr = result.metadata.attribution;
                         var versionId = metaAttr.length;
                         var lastUpdated;
-                        if (removed) {
+                        if (keyInfo.archived) {
                             ++versionId;
                             lastUpdated = result.archived_on.toISOString();
                         } else {
@@ -108,7 +115,7 @@ exports.read = function (bbr, id, callback) {
                             lastUpdated: lastUpdated,
                             versionId: versionId.toString()
                         };
-                        callback(null, resource, removed);
+                        callback(null, resource, keyInfo.archived);
                     }
                 }
             });

@@ -17,33 +17,44 @@ var libraryResults = modelsCommon({
     patientRefKey: 'subject'
 });
 
-var findSection = function (bbr, id, callback) {
-    bbr.idToPatientInfo('vitals', id, function (err, patientInfoVitals) {
+var findSection = function (bbr, id, invalidIsError, callback) {
+    bbr.idToPatientKey('vitals', id, function (err, keyInfoVitals) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
-        } else if (!patientInfoVitals) {
-            bbr.idToPatientInfo('results', id, function (err, patientInfoResults) {
+        } else if (!keyInfoVitals) {
+            bbr.idToPatientKey('results', id, function (err, keyInfoResults) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
-                } else if (!patientInfoResults) {
+                } else if (!keyInfoResults) {
                     callback(null, null);
                 } else {
                     callback(null, 'results');
                 }
             });
+        } else if (keyInfoVitals.invalid) {
+            if (invalidIsError) {
+                var invalidIdMsg = util.format('Resource id is invalid %s', id);
+                callback(errUtil.error('updateInvalidId', invalidIdMsg));
+            } else {
+                callback(null, null);
+            }
         } else {
             callback(null, 'vitals');
         }
     });
 };
 
-exports.create = function (bbr, resource, callback) {
+exports.createShared = function (bbr, resource, id, callback) {
     var sectionName = bbFhir.classifyResource(resource);
     if (sectionName === 'vitals') {
-        libraryVitals.create(bbr, resource, callback);
+        libraryVitals.createShared(bbr, resource, id, callback);
     } else {
-        libraryResults.create(bbr, resource, callback);
+        libraryResults.createShared(bbr, resource, id, callback);
     }
+};
+
+exports.create = function (bbr, resource, callback) {
+    this.createShared(bbr, resource, null, callback);
 };
 
 exports.search = function (bbr, params, callback) {
@@ -64,7 +75,7 @@ exports.search = function (bbr, params, callback) {
 };
 
 exports.read = function (bbr, id, callback) {
-    findSection(bbr, id, function (err, sectionName) {
+    findSection(bbr, id, false, function (err, sectionName) {
         if (err) {
             callback(err);
         } else if (!sectionName) {
@@ -82,12 +93,17 @@ exports.read = function (bbr, id, callback) {
 };
 
 exports.update = function (bbr, resource, callback) {
-    findSection(bbr, resource.id, function (err, sectionName) {
+    var self = this;
+    findSection(bbr, resource.id, true, function (err, sectionName) {
         if (err) {
             callback(err);
         } else if (!sectionName) {
-            var missingMsg = util.format('No resource with id %s', resource.id);
-            callback(errUtil.error('updateMissing', missingMsg));
+            self.createShared(bbr, resource, resource.id, function (err, createInfo) {
+                if (!err) {
+                    createInfo.isCreated = true;
+                }
+                callback(err, createInfo);
+            });
         } else {
             if (sectionName === 'vitals') {
                 libraryVitals.update(bbr, resource, callback);
@@ -99,7 +115,7 @@ exports.update = function (bbr, resource, callback) {
 };
 
 exports.delete = function (bbr, id, callback) {
-    findSection(bbr, id, function (err, sectionName) {
+    findSection(bbr, id, false, function (err, sectionName) {
         if (err) {
             callback(err);
         } else {

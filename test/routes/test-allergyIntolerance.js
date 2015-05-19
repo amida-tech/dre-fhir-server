@@ -48,7 +48,7 @@ describe(testTitle, function () {
 
     _.range(2).forEach(function (index) {
         var title = util.format('create patient %s', index);
-        it(title, fn(pt, pt.create, [patientSamples[index]]));
+        it(title, fn(pt, pt.create, [patientSamples[index], moments]));
     }, this);
 
     it('assign patient refs to all resources', function () {
@@ -56,9 +56,11 @@ describe(testTitle, function () {
     });
 
     _.range(2).forEach(function (i) {
-        _.range(resourceSets[i].length).forEach(function (j) {
+        var updTitle = util.format('create resource %s for patient %s using update', 0, i);
+        it(updTitle, fn(r, r.updateToCreate, [resourceSets[i][0], moments]));
+        _.range(1, resourceSets[i].length).forEach(function (j) {
             var title = util.format('create resource %s for patient %s', j, i);
-            it(title, fn(r, r.create, resourceSets[i][j]));
+            it(title, fn(r, r.create, [resourceSets[i][j], moments]));
         }, this);
     }, this);
 
@@ -92,8 +94,7 @@ describe(testTitle, function () {
         }, this);
     }, this);
 
-    it('update missing (invalid id)', fn(r, r.updateMissing, [resourceSets[0][0], 'abc']));
-    it('udpate missing (valid id)', fn(r, r.updateMissing, [resourceSets[0][0], '123456789012345678901234']));
+    it('update missing (invalid id)', fn(r, r.updateInvalidId, [resourceSets[0][0], 'abc']));
 
     it('update local resource 0 for patient 0', function () {
         resourceSets[0][0].recordedDate = '2002-01-01';
@@ -106,7 +107,7 @@ describe(testTitle, function () {
     _.range(2).forEach(function (i) {
         var ptTitle = util.format(' for patient %s', i);
         it('detect resource 0 not on server' + ptTitle, fn(r, r.readNegative, resourceSets[i][0]));
-        it('update resource 0' + ptTitle, fn(r, r.update, resourceSets[i][0]));
+        it('update resource 0' + ptTitle, fn(r, r.update, [resourceSets[i][0], moments, '2']));
         it('read resource 0' + ptTitle, fn(r, r.read, [resourceSets[i][0], moments, '2', false]));
     }, this);
 

@@ -31,8 +31,10 @@ describe('models patient', function () {
     it('create db error simulation, saveSection', shared.createDbError(model, samples[0], 'saveSection'));
     it('create db error simulation, patientKeyToId', shared.createDbError(model, samples[0], 'patientKeyToId'));
 
-    _.range(samples.length).forEach(function (i) {
-        it('create patient ' + i, shared.create(model, samples[i], [], patients));
+    it('create patient using update 0', shared.updateToCreate(model, samples[0], [], patients, moments));
+
+    _.range(1, samples.length).forEach(function (i) {
+        it('create patient ' + i, shared.create(model, samples[i], [], patients, moments));
     }, this);
 
     it('search (no param)', shared.search(model, null, patients, n));
@@ -97,8 +99,7 @@ describe('models patient', function () {
     }, this);
 
     it('update bad resource', shared.updateBadResource(model, samples[0]));
-    it('update invalid id', shared.updateMissing(model, samples[0], 'abc'));
-    it('update valid id missing', shared.updateMissing(model, samples[0], '123456789012345678901234'));
+    it('update invalid id', shared.updateInvalidId(model, samples[0], 'abc'));
     it('update db error simulation, idToPatientKey', shared.updateDbError(model, samples[0], 'idToPatientKey'));
     it('udpate db error simulation, saveSource', shared.updateDbError(model, samples[0], 'saveSource'));
     it('udpate db error simulation, replaceEntry', shared.updateDbError(model, samples[0], 'replaceEntry'));
@@ -113,7 +114,7 @@ describe('models patient', function () {
 
     _.range(2).forEach(function (i) {
         it('detect updated patient ' + i + ' not equal db', shared.readNegative(model, samples[i]));
-        it('update patient ' + i, shared.update(model, samples[i]));
+        it('update patient ' + i, shared.update(model, samples[i], moments, '2'));
         it('read updated patient ' + i, shared.read(model, samples[i], moments, '2'));
     }, this);
 

@@ -36,18 +36,18 @@ methods.saveNewResource = function (bbr, ptKey, resource, section, callback) {
         if (err) {
             callback(err);
         } else {
-            bbr.saveSection(sectionName, ptKey, section, sourceId, function (err, id) {
+            bbr.saveSection(sectionName, ptKey, section, sourceId, function (err, createInfo) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
-                    callback(null, id.toString());
+                    callback(null, createInfo);
                 }
             });
         }
     });
 };
 
-methods.create = function (bbr, resource, callback) {
+methods.createShared = function (bbr, resource, id, callback) {
     var entry = this.resourceToModelEntry(resource, callback);
     if (!entry) {
         return;
@@ -57,16 +57,22 @@ methods.create = function (bbr, resource, callback) {
             return related.target.reference;
         });
     }
+    if (id) {
+        entry._id = id;
+    }
 
-    var section = [entry];
     var self = this;
     modelsUtil.findPatientKey(bbr, resource, this.patientRefKey, function (err, ptKey) {
         if (err) {
             callback(err);
         } else {
-            self.saveNewResource(bbr, ptKey, resource, section, callback);
+            self.saveNewResource(bbr, ptKey, resource, entry, callback);
         }
     });
+};
+
+methods.create = function (bbr, resource, callback) {
+    this.createShared(bbr, resource, null, callback);
 };
 
 var paramToBBRParamMap = {
@@ -79,13 +85,13 @@ var paramsTransform = function (bbr, patientRefKey, params, callback) {
     if (params) {
         params = _.cloneDeep(params);
         if (params[patientRefKey]) {
-            bbr.idToPatientKey('demographics', params[patientRefKey].value, function (err, patientKey) {
+            bbr.idToPatientKey('demographics', params[patientRefKey].value, function (err, keyInfo) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
-                } else if (!patientKey) {
+                } else if (!keyInfo || keyInfo.invalid) {
                     callback(null, null);
                 } else {
-                    params[patientRefKey].value = patientKey;
+                    params[patientRefKey].value = keyInfo.key;
                     callback(null, paramsToBBRParams(params, paramToBBRParamMap));
                 }
             });
@@ -206,25 +212,34 @@ methods.update = function (bbr, resource, callback) {
     if (!entry) {
         return;
     }
-    bbr.idToPatientKey(sectionName, resource.id, function (err, ptKey, removed) {
+    var self = this;
+    bbr.idToPatientKey(sectionName, resource.id, function (err, keyInfo) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
-        } else if (!ptKey) {
-            var missingMsg = util.format('No resource with id %s', resource.id);
-            callback(errUtil.error('updateMissing', missingMsg));
-        } else if (removed) {
+        } else if (!keyInfo) {
+            self.createShared(bbr, resource, resource.id, function (err, createInfo) {
+                if (!err) {
+                    createInfo.isCreated = true;
+                }
+                callback(err, createInfo);
+            });
+        } else if (keyInfo.archived) {
             var deletedMsg = util.format('Resource with id %s is deleted', resource.id);
             callback(errUtil.error('updateDeleted', deletedMsg));
+        } else if (keyInfo.invalid) {
+            var invalidIdMsg = util.format('Resource id is invalid %s', resource.id);
+            callback(errUtil.error('updateInvalidId', invalidIdMsg));
         } else {
-            modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, sourceId) {
+            modelsUtil.saveResourceAsSource(bbr, keyInfo.key, resource, function (err, sourceId) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
-                    bbr.replaceEntry(sectionName, ptKey, resource.id, sourceId, entry, function (err, id) {
+                    bbr.replaceEntry(sectionName, keyInfo.key, resource.id, sourceId, entry, function (err, updateInfo) {
                         if (err) {
                             callback(errUtil.error('internalDbError', err.message));
                         } else {
-                            callback(null);
+                            updateInfo.isCreated = false;
+                            callback(null, updateInfo);
                         }
                     });
                 }
@@ -235,14 +250,14 @@ methods.update = function (bbr, resource, callback) {
 
 methods.delete = function (bbr, id, callback) {
     var sectionName = this.sectionName;
-    bbr.idToPatientKey(sectionName, id, function (err, ptKey) {
+    bbr.idToPatientKey(sectionName, id, function (err, keyInfo) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
-        } else if (!ptKey) {
+        } else if (!keyInfo || keyInfo.invalid) {
             var missingMsg = util.format('No resource with id %s', id);
             callback(errUtil.error('deleteMissing', missingMsg));
         } else {
-            bbr.removeEntry(sectionName, ptKey, id, function (err) {
+            bbr.removeEntry(sectionName, keyInfo.key, id, function (err) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {

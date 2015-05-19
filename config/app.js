@@ -18,7 +18,7 @@ var dbmw = function (config) {
             next();
         } else {
             var dbConfig = _.assign({}, config.db, {
-                skipCleanDoc: true
+                fhir: true
             });
             bbr.connectDatabase(config.server.host, dbConfig, function (err) {
                 req.app.set('connection', bbr);

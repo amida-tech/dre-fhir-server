@@ -39,9 +39,10 @@ describe(testTitle, function () {
 
     var n = resources.length;
 
-    _.range(n).forEach(function (i) {
+    it('create patient 0 using update', fn(r, r.updateToCreate, [resources[0], moments]));
+    _.range(1, n).forEach(function (i) {
         var title = util.format('create patient %s', i);
-        it(title, fn(r, r.create, resources[i]));
+        it(title, fn(r, r.create, [resources[i], moments]));
     }, this);
 
     it('search all using get', fn(r, r.search, [n, {}]));
@@ -102,8 +103,7 @@ describe(testTitle, function () {
         it(title, fn(r, r.read, [resources[i], moments, '1', false]));
     }, this);
 
-    it('update missing (invalid id)', fn(r, r.updateMissing, [resources[0], 'abc']));
-    it('udpate missing (valid id)', fn(r, r.updateMissing, [resources[0], '123456789012345678901234']));
+    it('update missing (invalid id)', fn(r, r.updateInvalidId, [resources[0], 'abc']));
 
     it('update local resource 0', function () {
         resources[0].gender = 'female';
@@ -115,7 +115,7 @@ describe(testTitle, function () {
 
     _.range(2).forEach(function (i) {
         it(util.format('detect local resource %s not on server', i), fn(r, r.readNegative, resources[i]));
-        it(util.format('update resource %s', i), fn(r, r.update, resources[i]));
+        it(util.format('update resource %s', i), fn(r, r.update, [resources[i], moments, '2']));
         it(util.format('read resource %s', i), fn(r, r.read, [resources[i], moments, '2', false]));
     });
 

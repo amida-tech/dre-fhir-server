@@ -17,14 +17,23 @@ module.exports = function (options) {
     var result = Object.create(methods);
     options = options || {};
     result.patientRefKey = options.patientRefKey;
+    result.manualId = '023456789012345678901234';
     return result;
+};
+
+methods.incrementManualId = function () {
+    var n = this.manualId.length;
+    var lastFour = this.manualId.substring(n - 4, n);
+    lastFour = (parseInt(lastFour) + 1).toString();
+    this.manualId = this.manualId.substring(0, n - 4) + lastFour;
+    return this.manualId;
 };
 
 methods.connectDatabase = function (dbName) {
     return function (done) {
         bbr.connectDatabase('localhost', {
             dbName: dbName,
-            skipCleanDoc: true
+            fhir: true
         }, function (err) {
             if (err) {
                 done(err);
@@ -92,15 +101,22 @@ methods.createBadPatientId = function (model, sample, badId) {
     };
 };
 
-methods.create = function (model, sample, list, map) {
+methods.create = function (model, sample, list, map, moments) {
     return function (done) {
-        model.create(bbr, sample, function (err, id) {
+        model.create(bbr, sample, function (err, createInfo) {
             if (err) {
                 done(err);
             } else {
-                sample.id = id.toString();
+                var momentStart = moments.start;
+                expect(createInfo).to.exist;
+                expect(createInfo.versionId).to.equal('1');
+                var momentMeta = moment(createInfo.lastUpdated);
+                expect(momentMeta.isValid()).to.equal(true);
+                var momentNow = moment();
+                expect(momentMeta.isBetween(momentStart, momentNow)).to.equal(true);
+                sample.id = createInfo.id;
                 map[sample.id] = sample;
-                list.push(id);
+                list.push(sample.id);
                 done();
             }
         });
@@ -295,14 +311,14 @@ methods.readNegative = function (model, sample) {
     };
 };
 
-methods.updateMissing = function (model, sample, badId) {
+methods.updateInvalidId = function (model, sample, badId) {
     return function (done) {
         var sampleClone = _.cloneDeep(sample);
         sampleClone.id = badId;
         model.update(bbr, sampleClone, function (err, resource) {
             expect(err).to.exist;
             expect(err.codeDetail).to.exist;
-            expect(err.codeDetail.key).to.equal('updateMissing');
+            expect(err.codeDetail.key).to.equal('updateInvalidId');
             done();
         });
     };
@@ -339,12 +355,46 @@ methods.updateDbError = function (model, sample, method, stubFn) {
     };
 };
 
-methods.update = function (model, sample) {
+methods.update = function (model, sample, moments, versionId) {
     return function (done) {
-        model.update(bbr, sample, function (err) {
+        model.update(bbr, sample, function (err, updateInfo) {
             if (err) {
                 done(err);
             } else {
+                var momentStart = moments.start;
+                expect(updateInfo).to.exist;
+                expect(updateInfo.isCreated).to.equal(false);
+                expect(updateInfo.versionId).to.equal(versionId);
+                var momentMeta = moment(updateInfo.lastUpdated);
+                expect(momentMeta.isValid()).to.equal(true);
+                var momentNow = moment();
+                expect(momentMeta.isBetween(momentStart, momentNow)).to.equal(true);
+                done();
+            }
+        });
+    };
+};
+
+methods.updateToCreate = function (model, sample, list, map, moments) {
+    var self = this;
+    return function (done) {
+        var id = self.incrementManualId();
+        sample.id = id;
+        model.update(bbr, sample, function (err, updateInfo) {
+            if (err) {
+                done(err);
+            } else {
+                var momentStart = moments.start;
+                expect(updateInfo).to.exist;
+                expect(updateInfo.isCreated).to.equal(true);
+                expect(updateInfo.versionId).to.equal('1');
+                var momentMeta = moment(updateInfo.lastUpdated);
+                expect(momentMeta.isValid()).to.equal(true);
+                var momentNow = moment();
+                expect(momentMeta.isBetween(momentStart, momentNow)).to.equal(true);
+                expect(updateInfo.id.toString()).to.equal(id);
+                map[sample.id] = sample;
+                list.push(sample.id);
                 done();
             }
         });

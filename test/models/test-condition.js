@@ -28,7 +28,7 @@ describe('models condition', function () {
     it('detect missing patient', shared.detectMissingPatient(model, samplesSet0[0]));
 
     _.range(2).forEach(function (i) {
-        it('create patient ' + i, shared.create(patientModel, patientSamples[i], [], {}));
+        it('create patient ' + i, shared.create(patientModel, patientSamples[i], [], {}, moments));
     }, this);
 
     it('assign patient-0 to sample set-0', function () {
@@ -49,12 +49,16 @@ describe('models condition', function () {
     var entryMapById = {};
     var entryIds = [];
 
-    _.range(samplesSet0.length).forEach(function (i) {
-        it('create for patient-0 ' + i, shared.create(model, samplesSet0[i], entryIds, entryMapById));
+    it('create for patient-0 using update 0', shared.updateToCreate(model, samplesSet0[0], entryIds, entryMapById, moments));
+
+    _.range(1, samplesSet0.length).forEach(function (i) {
+        it('create for patient-0 ' + i, shared.create(model, samplesSet0[i], entryIds, entryMapById, moments));
     });
 
-    _.range(samplesSet1.length).forEach(function (i) {
-        it('create for patient-1 ' + i, shared.create(model, samplesSet1[i], entryIds, entryMapById));
+    it('create for patient-1 using update 0', shared.updateToCreate(model, samplesSet1[0], entryIds, entryMapById, moments));
+
+    _.range(1, samplesSet1.length).forEach(function (i) {
+        it('create for patient-1 ' + i, shared.create(model, samplesSet1[i], entryIds, entryMapById, moments));
     });
 
     it('search (no param)', shared.search(model, null, entryMapById, samplesSet0.length + samplesSet1.length));
@@ -90,8 +94,7 @@ describe('models condition', function () {
     });
 
     it('update bad resource', shared.updateBadResource(model, samplesSet0[0]));
-    it('update invalid id', shared.updateMissing(model, samplesSet0[0], 'abc'));
-    it('update valid id missing', shared.updateMissing(model, samplesSet0[0], '123456789012345678901234'));
+    it('update invalid id', shared.updateInvalidId(model, samplesSet0[0], 'abc'));
     it('update db error simulation, idToPatientKey', shared.updateDbError(model, samplesSet0[0], 'idToPatientKey'));
     it('udpate db error simulation, saveSource', shared.updateDbError(model, samplesSet0[0], 'saveSource'));
     it('udpate db error simulation, replaceEntry', shared.updateDbError(model, samplesSet0[0], 'replaceEntry'));
@@ -104,10 +107,10 @@ describe('models condition', function () {
     });
 
     it('detect updated not equal db for patient-0', shared.readNegative(model, samplesSet0[0]));
-    it('update for patient-0', shared.update(model, samplesSet0[0]));
+    it('update for patient-0', shared.update(model, samplesSet0[0], moments, '2'));
     it('read updated for patient-0', shared.read(model, samplesSet0[0], moments, '2'));
     it('detect updated not equal db for patient-1', shared.readNegative(model, samplesSet1[0]));
-    it('update for patient-1', shared.update(model, samplesSet1[0]));
+    it('update for patient-1', shared.update(model, samplesSet1[0], moments, '2'));
     it('read updated for patient-1', shared.read(model, samplesSet1[0], moments, '2'));
 
     var n0 = samplesSet0.length - 1;
