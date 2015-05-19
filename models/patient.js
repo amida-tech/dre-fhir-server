@@ -78,7 +78,7 @@ exports.search = function (bbr, params, callback) {
 };
 
 exports.read = function (bbr, id, callback) {
-    bbr.idToPatientKey('demographics', id, function (err, ptKey) {
+    bbr.idToPatientKey('demographics', id, function (err, ptKey, removed) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
         } else if (!ptKey) {
@@ -97,11 +97,18 @@ exports.read = function (bbr, id, callback) {
                         resource.id = id;
                         var metaAttr = result.metadata.attribution;
                         var versionId = metaAttr.length;
+                        var lastUpdated;
+                        if (removed) {
+                            ++versionId;
+                            lastUpdated = result.archived_on.toISOString();
+                        } else {
+                            lastUpdated = metaAttr[versionId - 1].merged.toISOString();
+                        }
                         resource.meta = {
-                            lastUpdated: metaAttr[versionId - 1].merged.toISOString(),
+                            lastUpdated: lastUpdated,
                             versionId: versionId.toString()
                         };
-                        callback(null, resource);
+                        callback(null, resource, removed);
                     }
                 }
             });

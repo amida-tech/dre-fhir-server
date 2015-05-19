@@ -34,7 +34,9 @@ describe(testTitle, function () {
     });
 
     var resourceSets = [samples.set0(), samples.set1()];
-    var momentStart = moment();
+    var moments = {
+        start: moment()
+    };
 
     before(fn(appw, appw.start));
 
@@ -86,7 +88,7 @@ describe(testTitle, function () {
     _.range(2).forEach(function (i) {
         _.range(resourceSets[i].length).forEach(function (j) {
             var title = util.format('read resource %s for patient %s', j, i);
-            it(title, fn(r, r.read, [resourceSets[i][j], momentStart, '1']));
+            it(title, fn(r, r.read, [resourceSets[i][j], moments, '1', false]));
         }, this);
     }, this);
 
@@ -107,7 +109,7 @@ describe(testTitle, function () {
         var ptTitle = util.format(' for patient %s', i);
         it('detect resource 0 not on server' + ptTitle, fn(r, r.readNegative, resourceSets[i][0]));
         it('update resource 0' + ptTitle, fn(r, r.update, resourceSets[i][0]));
-        it('read resource 0' + ptTitle, fn(r, r.read, [resourceSets[i][0], momentStart, '2']));
+        it('read resource 0' + ptTitle, fn(r, r.read, [resourceSets[i][0], moments, '2', false]));
     }, this);
 
     it('delete missing (invalid id)', fn(r, r.deleteMissing, 'abc'));
@@ -116,10 +118,20 @@ describe(testTitle, function () {
     var n0 = resourceSets[0].length - 1;
     var n1 = resourceSets[1].length - 1;
 
+    it('refresh moment start', function () {
+        moments.start = moment();
+    });
+
     it('delete last resource for patient 0', fn(r, r.delete, resourceSets[0][n0]));
     it('delete last resource for patient 1', fn(r, r.delete, resourceSets[1][n1]));
 
     it('search all using get', fn(r, r.search, [n0 + n1, {}]));
+
+    it('update deleted last resource for patient 0', fn(r, r.updateDeleted, resourceSets[0][n0]));
+    it('update deletes last resource for patient 1', fn(r, r.updateDeleted, resourceSets[1][n1]));
+
+    it('read deleted last resource for patient 0', fn(r, r.read, [resourceSets[0][n0], moments, '2', true]));
+    it('read deleted last resource for patient 1', fn(r, r.read, [resourceSets[1][n1], moments, '2', true]));
 
     after(fn(appw, appw.cleanUp));
 });

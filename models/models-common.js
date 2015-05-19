@@ -148,7 +148,7 @@ methods.search = function (bbr, params, callback) {
 methods.read = function (bbr, id, callback) {
     var sectionName = this.sectionName;
     var patientRefKey = this.patientRefKey;
-    bbr.idToPatientInfo(sectionName, id, function (err, patientInfo) {
+    bbr.idToPatientInfo(sectionName, id, function (err, patientInfo, removed) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
         } else if (!patientInfo) {
@@ -171,8 +171,15 @@ methods.read = function (bbr, id, callback) {
                         };
                         var metaAttr = result.metadata.attribution;
                         var versionId = metaAttr.length;
+                        var lastUpdated;
+                        if (removed) {
+                            ++versionId;
+                            lastUpdated = result.archived_on.toISOString();
+                        } else {
+                            lastUpdated = metaAttr[versionId - 1].merged.toISOString();
+                        }
                         resource.meta = {
-                            lastUpdated: metaAttr[versionId - 1].merged.toISOString(),
+                            lastUpdated: lastUpdated,
                             versionId: versionId.toString()
                         };
                         if (result._components && result._components.length) {
@@ -185,7 +192,7 @@ methods.read = function (bbr, id, callback) {
                                 };
                             });
                         }
-                        callback(null, resource);
+                        callback(null, resource, removed);
                     }
                 }
             });
@@ -199,12 +206,15 @@ methods.update = function (bbr, resource, callback) {
     if (!entry) {
         return;
     }
-    bbr.idToPatientKey(sectionName, resource.id, function (err, ptKey) {
+    bbr.idToPatientKey(sectionName, resource.id, function (err, ptKey, removed) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
         } else if (!ptKey) {
             var missingMsg = util.format('No resource with id %s', resource.id);
             callback(errUtil.error('updateMissing', missingMsg));
+        } else if (removed) {
+            var deletedMsg = util.format('Resource with id %s is deleted', resource.id);
+            callback(errUtil.error('updateDeleted', deletedMsg));
         } else {
             modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, sourceId) {
                 if (err) {

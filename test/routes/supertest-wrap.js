@@ -67,12 +67,12 @@ base.create = function (sample, done) {
         .end(done);
 };
 
-base.read = function (sample, momentStart, versionId, done) {
+base.read = function (sample, moments, versionId, expectedRemoved, done) {
     var self = this;
     var id = sample.id;
     var path = util.format('/fhir/%s/%s', this.resourceType, id);
     this.api.get(path)
-        .expect(200)
+        .expect(expectedRemoved ? 410 : 200)
         .expect(function (res) {
             var resource = res.body;
             if (self.readTransform) {
@@ -86,7 +86,7 @@ base.read = function (sample, momentStart, versionId, done) {
             var momentMeta = moment(meta.lastUpdated);
             expect(momentMeta.isValid()).to.equal(true);
             var momentNow = moment();
-            expect(momentMeta.isBetween(momentStart, momentNow)).to.equal(true);
+            expect(momentMeta.isBetween(moments.start, momentNow)).to.equal(true);
         })
         .end(done);
 };
@@ -153,6 +153,14 @@ base.updateMissing = function (sample, badId, done) {
     var path = util.format('/fhir/%s/%s', this.resourceType, badId);
     this.api.put(path)
         .send(sampleClone)
+        .expect(404)
+        .end(done);
+};
+
+base.updateDeleted = function (sample, done) {
+    var path = util.format('/fhir/%s/%s', this.resourceType, sample.id);
+    this.api.put(path)
+        .send(sample)
         .expect(404)
         .end(done);
 };

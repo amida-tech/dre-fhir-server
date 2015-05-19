@@ -27,7 +27,9 @@ describe(testTitle, function () {
     var resource0Clone = _.cloneDeep(resources[0]);
     resource0Clone.birthDate = '1978-06-09';
     resources.push(resource0Clone);
-    var momentStart = moment();
+    var moments = {
+        start: moment()
+    };
 
     before(fn(appw, appw.start));
 
@@ -97,7 +99,7 @@ describe(testTitle, function () {
 
     _.range(n).forEach(function (i) {
         var title = util.format('read resource %s', i);
-        it(title, fn(r, r.read, [resources[i], momentStart, '1']));
+        it(title, fn(r, r.read, [resources[i], moments, '1', false]));
     }, this);
 
     it('update missing (invalid id)', fn(r, r.updateMissing, [resources[0], 'abc']));
@@ -114,16 +116,26 @@ describe(testTitle, function () {
     _.range(2).forEach(function (i) {
         it(util.format('detect local resource %s not on server', i), fn(r, r.readNegative, resources[i]));
         it(util.format('update resource %s', i), fn(r, r.update, resources[i]));
-        it(util.format('read resource %s', i), fn(r, r.read, [resources[i], momentStart, '2']));
+        it(util.format('read resource %s', i), fn(r, r.read, [resources[i], moments, '2', false]));
     });
 
     it('delete missing (invalid id)', fn(r, r.deleteMissing, 'abc'));
     it('delete missing (valid id)', fn(r, r.deleteMissing, '123456789012345678901234'));
 
+    it('refresh moment start', function () {
+        moments.start = moment();
+    });
+
     it('delete last resource', fn(r, r.delete, resources[n - 1]));
     it('delete next to last resource', fn(r, r.delete, resources[n - 2]));
 
     it('search all using get', fn(r, r.search, [n - 2, {}]));
+
+    it('update deleted last resource', fn(r, r.updateDeleted, resources[n - 1]));
+    it('update deletes next to last resource', fn(r, r.updateDeleted, resources[n - 2]));
+
+    it('read deleted last resource for patient 0', fn(r, r.read, [resources[n - 1], moments, '2', true]));
+    it('read deleted last resource for patient 1', fn(r, r.read, [resources[n - 2], moments, '2', true]));
 
     after(fn(appw, appw.cleanUp));
 });

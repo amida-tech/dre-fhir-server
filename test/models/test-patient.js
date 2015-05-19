@@ -18,7 +18,9 @@ describe('models patient', function () {
     var sample0Clone = _.cloneDeep(samples[0]);
     sample0Clone.birthDate = '1978-06-09';
     samples.push(sample0Clone);
-    var momentStart = moment();
+    var moments = {
+        start: moment()
+    };
 
     var patients = {};
 
@@ -91,7 +93,7 @@ describe('models patient', function () {
     it('read db error simulation, getEntry', shared.readDbError(model, samples[0], 'getEntry'));
 
     _.range(samples.length).forEach(function (i) {
-        it('read for patient ' + i, shared.read(model, samples[i], momentStart, '1'));
+        it('read for patient ' + i, shared.read(model, samples[i], moments, '1'));
     }, this);
 
     it('update bad resource', shared.updateBadResource(model, samples[0]));
@@ -112,7 +114,7 @@ describe('models patient', function () {
     _.range(2).forEach(function (i) {
         it('detect updated patient ' + i + ' not equal db', shared.readNegative(model, samples[i]));
         it('update patient ' + i, shared.update(model, samples[i]));
-        it('read updated patient ' + i, shared.read(model, samples[i], momentStart, '2'));
+        it('read updated patient ' + i, shared.read(model, samples[i], moments, '2'));
     }, this);
 
     it('delete invalid id', shared.deleteMissing(model, 'abc'));
@@ -120,10 +122,20 @@ describe('models patient', function () {
     it('delete db error simulation, idToPatientKey', shared.deleteDbError(model, samples[n - 1], 'idToPatientKey'));
     it('delete db error simulation, removeEntry', shared.deleteDbError(model, samples[n - 1], 'removeEntry'));
 
+    it('refresh moment start', function () {
+        moments.start = moment();
+    });
+
     it('delete last patient', shared.delete(model, samples[n - 1]));
-    it('delete next to last', shared.delete(model, samples[n - 2]));
+    it('delete next to last patient', shared.delete(model, samples[n - 2]));
 
     it('search (no param)', shared.search(model, null, patients, n - 2));
+
+    it('update deleted last patient', shared.updateDeleted(model, samples[n - 1]));
+    it('update deleted next to last patient', shared.updateDeleted(model, samples[n - 2]));
+
+    it('read deleted for patient-0', shared.read(model, samples[n - 1], moments, '2', true));
+    it('read deleted for patient-1', shared.read(model, samples[n - 2], moments, '2', true));
 
     after(shared.clearDatabase);
 });

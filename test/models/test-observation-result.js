@@ -21,7 +21,9 @@ describe('models observation result', function () {
 
     var samplesSet0 = samples.set0();
     var samplesSet1 = samples.set1();
-    var momentStart = moment();
+    var moments = {
+        start: moment()
+    };
 
     it('detect missing patient', shared.detectMissingPatient(model, samplesSet0[0]));
 
@@ -117,11 +119,11 @@ describe('models observation result', function () {
     }));
 
     _.range(samplesSet0.length).forEach(function (i) {
-        it('read for patient-0 ' + i, shared.read(model, samplesSet0[i], momentStart, '1'));
+        it('read for patient-0 ' + i, shared.read(model, samplesSet0[i], moments, '1'));
     });
 
     _.range(samplesSet1.length).forEach(function (i) {
-        it('read for patient-1 ' + i, shared.read(model, samplesSet1[i], momentStart, '1'));
+        it('read for patient-1 ' + i, shared.read(model, samplesSet1[i], moments, '1'));
     });
 
     it('update bad resource', shared.updateBadResource(model, samplesSet0[0]));
@@ -138,10 +140,10 @@ describe('models observation result', function () {
 
     it('detect updated not equal db for patient-0', shared.readNegative(model, samplesSet0[0]));
     it('update for patient-0', shared.update(model, samplesSet0[0]));
-    it('read updated for patient-0', shared.read(model, samplesSet0[0], momentStart, '2'));
+    it('read updated for patient-0', shared.read(model, samplesSet0[0], moments, '2'));
     it('detect updated not equal db for patient-1', shared.readNegative(model, samplesSet1[0]));
     it('update for patient-1', shared.update(model, samplesSet1[0]));
-    it('read updated for patient-1', shared.read(model, samplesSet1[0], momentStart, '2'));
+    it('read updated for patient-1', shared.read(model, samplesSet1[0], moments, '2'));
 
     var n0 = samplesSet0.length - 1;
     var n1 = samplesSet1.length - 1;
@@ -152,10 +154,20 @@ describe('models observation result', function () {
     it('delete db error simulation, removeEntry', shared.deleteDbError(model, samplesSet0[n0], 'removeEntry'));
     it('delete db error simulation, idToPatientInfo', shared.deleteDbError(model, samplesSet0[n0], 'idToPatientInfo'));
 
+    it('refresh moment start', function () {
+        moments.start = moment();
+    });
+
     it('delete last for patient-0', shared.delete(model, samplesSet0[n0]));
     it('delete last for patient-1', shared.delete(model, samplesSet1[n1]));
 
     it('search (no param)', shared.search(model, null, entryMapById, n0 + n1));
+
+    it('update deleted for patient-0', shared.updateDeleted(model, samplesSet0[n0]));
+    it('update deleted for patient-1', shared.updateDeleted(model, samplesSet1[n1]));
+
+    it('read deleted for patient-0', shared.read(model, samplesSet0[n0], moments, '2', true));
+    it('read deleted for patient-1', shared.read(model, samplesSet1[n1], moments, '2', true));
 
     after(shared.clearDatabase);
 });

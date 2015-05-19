@@ -214,11 +214,12 @@ methods.searchByMissingPatient = function (model, id, map) {
     };
 };
 
-methods.read = function (model, sample, momentStart, versionId) {
+methods.read = function (model, sample, moments, versionId, expectedRemoved) {
     var patientRefKey = this.patientRefKey;
     return function (done) {
+        var momentStart = moments.start;
         var id = sample.id;
-        model.read(bbr, id, function (err, resource) {
+        model.read(bbr, id, function (err, resource, removed) {
             if (err) {
                 done(err);
             } else {
@@ -236,6 +237,7 @@ methods.read = function (model, sample, momentStart, versionId) {
                 expect(momentMeta.isValid()).to.equal(true);
                 var momentNow = moment();
                 expect(momentMeta.isBetween(momentStart, momentNow)).to.equal(true);
+                expect(!!removed).to.be.equal(!!expectedRemoved);
                 done();
             }
         });
@@ -301,6 +303,17 @@ methods.updateMissing = function (model, sample, badId) {
             expect(err).to.exist;
             expect(err.codeDetail).to.exist;
             expect(err.codeDetail.key).to.equal('updateMissing');
+            done();
+        });
+    };
+};
+
+methods.updateDeleted = function (model, sample) {
+    return function (done) {
+        model.update(bbr, sample, function (err, resource) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('updateDeleted');
             done();
         });
     };
