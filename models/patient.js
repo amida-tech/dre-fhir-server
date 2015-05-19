@@ -11,7 +11,7 @@ var modelsUtil = require('./models-util');
 var modelsCommon = require('./models-common');
 var errUtil = require('../lib/error-util');
 
-var library = modelsCommon({
+module.exports = exports = modelsCommon({
     sectionName: 'demographics'
 });
 
@@ -33,7 +33,7 @@ var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
 };
 
 exports.create = function (bbr, resource, callback) {
-    var demographics = library.resourceToModelEntry(resource, callback);
+    var demographics = exports.resourceToModelEntry(resource, callback);
     if (!demographics) {
         return;
     }
@@ -44,7 +44,7 @@ exports.create = function (bbr, resource, callback) {
         if (err) {
             callback(err);
         } else {
-            library.saveNewResource(bbr, ptKey, resource, demographics, callback);
+            exports.saveNewResource(bbr, ptKey, resource, demographics, callback);
         }
     });
 };
@@ -78,7 +78,7 @@ exports.search = function (bbr, params, callback) {
 };
 
 exports.read = function (bbr, id, callback) {
-    bbr.idToPatientKey('demographics', id, function (err, ptKey) {
+    bbr.idToPatientKey('demographics', id, function (err, ptKey, removed) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
         } else if (!ptKey) {
@@ -89,20 +89,29 @@ exports.read = function (bbr, id, callback) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
-                    var bundle = bbGenFhir.demographicsToFHIR(result);
-                    var resource = bundle.entry[0].resource;
-                    resource.id = id;
-                    callback(null, resource);
+                    var resource = bbGenFhir.entryToResource('demographics', result.data);
+                    if (!resource) {
+                        var msg = util.format('Entry for %s cannot be converted to a resource', 'demographics');
+                        callback(errUtil.error('internalDbError', msg));
+                    } else {
+                        resource.id = id;
+                        var metaAttr = result.metadata.attribution;
+                        var versionId = metaAttr.length;
+                        var lastUpdated;
+                        if (removed) {
+                            ++versionId;
+                            lastUpdated = result.archived_on.toISOString();
+                        } else {
+                            lastUpdated = metaAttr[versionId - 1].merged.toISOString();
+                        }
+                        resource.meta = {
+                            lastUpdated: lastUpdated,
+                            versionId: versionId.toString()
+                        };
+                        callback(null, resource, removed);
+                    }
                 }
             });
         }
     });
-};
-
-exports.update = function (bbr, resource, callback) {
-    library.update(bbr, resource, callback);
-};
-
-exports.delete = function (bbr, id, callback) {
-    library.delete(bbr, id, callback);
 };

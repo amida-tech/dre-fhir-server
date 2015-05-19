@@ -2,6 +2,7 @@
 
 var util = require('util');
 var _ = require('lodash');
+var moment = require('moment');
 
 var vitalSamples = require('../samples/observation-vital-samples');
 var resultSamples = require('../samples/observation-result-samples');
@@ -38,6 +39,9 @@ describe(testTitle, function () {
     resourceSets[1].panelStart = vitalSamples.panelStart1;
     resourceSets[2].panelStart = resultSamples.panelStart0;
     resourceSets[3].panelStart = resultSamples.panelStart1;
+    var moments = {
+        start: moment()
+    };
 
     var nSets = resourceSets.length;
 
@@ -104,7 +108,7 @@ describe(testTitle, function () {
     _.range(nSets).forEach(function (i) {
         _.range(resourceSets[i].length).forEach(function (j) {
             var title = util.format('read resource %s for patient %s', j, i);
-            it(title, fn(r, r.read, resourceSets[i][j]));
+            it(title, fn(r, r.read, [resourceSets[i][j], moments, '1', false]));
         }, this);
     }, this);
 
@@ -121,11 +125,15 @@ describe(testTitle, function () {
         var ptTitle = util.format(' for patient %s', i);
         it('detect resource 0 not on server' + ptTitle, fn(r, r.readNegative, resourceSets[i][0]));
         it('update resource 0' + ptTitle, fn(r, r.update, resourceSets[i][0]));
-        it('read resource 0' + ptTitle, fn(r, r.read, resourceSets[i][0]));
+        it('read resource 0' + ptTitle, fn(r, r.read, [resourceSets[i][0], moments, '2', false]));
     }, this);
 
     it('delete missing (invalid id)', fn(r, r.deleteMissing, 'abc'));
     it('delete missing (valid id)', fn(r, r.deleteMissing, '123456789012345678901234'));
+
+    it('refresh moment start', function () {
+        moments.start = moment();
+    });
 
     _.range(nSets).forEach(function (i) {
         var nLast = resourceSets[i].length - 1;
@@ -134,6 +142,18 @@ describe(testTitle, function () {
     }, this);
 
     it('search all using get', fn(r, r.search, [n - 4, {}]));
+
+    _.range(nSets).forEach(function (i) {
+        var nLast = resourceSets[i].length - 1;
+        var title = util.format('update deleted last resource for patient %s', i);
+        it(title, fn(r, r.updateDeleted, resourceSets[i][nLast]));
+    }, this);
+
+    _.range(nSets).forEach(function (i) {
+        var nLast = resourceSets[i].length - 1;
+        var title = util.format('read deleted last resource for patient %s', i);
+        it(title, fn(r, r.read, [resourceSets[i][nLast], moments, '2', true]));
+    }, this);
 
     after(fn(appw, appw.cleanUp));
 });

@@ -51,11 +51,11 @@ module.exports = (function () {
                 var c = req.app.get('connection');
                 var id = req.params.id;
 
-                model.read(c, id, function (err, resource) {
+                model.read(c, id, function (err, resource, removed) {
                     if (err) {
                         handleError(res, err);
                     } else {
-                        res.status(200);
+                        res.status(removed ? 410 : 200);
                         res.send(resource);
                     }
                 });
