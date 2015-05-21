@@ -126,7 +126,7 @@ module.exports = (function () {
                 fpp(searchParam),
                 function (req, res) {
                     var c = req.app.get('connection');
-                    var params = req.fhirParams || {};
+                    var params = req.fhirParams;
                     model.search(c, params, function (err, bundle) {
                         if (err) {
                             handleError(res, err);

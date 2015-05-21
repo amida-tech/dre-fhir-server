@@ -11,6 +11,8 @@ var supertestWrap = require('./supertest-wrap');
 var appWrap = require('./app-wrap');
 var common = require('./common');
 
+var model = require('../../models/observation');
+
 var fn = common.generateTestItem;
 var fnId = common.searchById;
 var fnPt = common.searchByPatient;
@@ -82,6 +84,7 @@ describe(testTitle, function () {
         }, this);
     }, this);
 
+    it('search error', fn(r, r.searchError, [model]));
     var n = resourceSets.reduce(function (r, resources) {
         return r + resources.length;
     }, 0);

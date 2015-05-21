@@ -10,6 +10,8 @@ var supertestWrap = require('./supertest-wrap');
 var appWrap = require('./app-wrap');
 var common = require('./common');
 
+var model = require('../../models/allergyIntolerance');
+
 var fn = common.generateTestItem;
 var fnId = common.searchById;
 var fnPt = common.searchByPatient;
@@ -64,6 +66,7 @@ describe(testTitle, function () {
         }, this);
     }, this);
 
+    it('search error', fn(r, r.searchError, [model]));
     var n = resourceSets[0].length + resourceSets[1].length;
     it('search all using get', fn(r, r.search, [n, {}]));
     it('search all using post', fn(r, r.searchByPost, [n, {}]));

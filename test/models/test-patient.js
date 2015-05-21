@@ -93,6 +93,7 @@ describe('models patient', function () {
     it('read valid id missing', shared.readMissing(model, '123456789012345678901234'));
     it('read db error simulation, idToPatientKey', shared.readDbError(model, samples[0], 'idToPatientKey'));
     it('read db error simulation, getEntry', shared.readDbError(model, samples[0], 'getEntry'));
+    it('read db error simulation, entryToResource', shared.readGenFhirError(model, samples[0]));
 
     _.range(samples.length).forEach(function (i) {
         it('read for patient ' + i, shared.read(model, samples[i], moments, '1'));

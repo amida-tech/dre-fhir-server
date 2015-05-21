@@ -5,10 +5,13 @@ var util = require('util');
 var chai = require('chai');
 var _ = require('lodash');
 var moment = require('moment');
+var sinon = require('sinon');
 
 var expect = chai.expect;
 
 var base = {};
+
+var errUtil = require('../../lib/error-util.js');
 
 module.exports = function (options) {
     var result = Object.create(base);
@@ -268,4 +271,19 @@ base.search = function (expectedCount, query, done) {
     var path = util.format('/fhir/%s', this.resourceType);
     var req = this.api.get(path);
     this._search(req, expectedCount, query, done);
+};
+
+base.searchError = function (model, done) {
+    var path = util.format('/fhir/%s', this.resourceType);
+    var req = this.api.get(path);
+    var stub = sinon.stub(model, 'search', function () {
+        var err = errUtil.error('internalDbError', 'searcherror');
+        arguments[arguments.length - 1](err);
+    });
+    var self = this;
+    req.expect(500)
+        .expect(function (res) {
+            stub.restore();
+        })
+        .end(done);
 };

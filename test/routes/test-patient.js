@@ -9,6 +9,8 @@ var supertestWrap = require('./supertest-wrap');
 var appWrap = require('./app-wrap');
 var common = require('./common');
 
+var model = require('../../models/patient');
+
 var fn = common.generateTestItem;
 var fnId = common.searchById;
 
@@ -45,6 +47,7 @@ describe(testTitle, function () {
         it(title, fn(r, r.create, [resources[i], moments]));
     }, this);
 
+    it('search error', fn(r, r.searchError, [model]));
     it('search all using get', fn(r, r.search, [n, {}]));
     it('search all using post', fn(r, r.searchByPost, [n, {}]));
 

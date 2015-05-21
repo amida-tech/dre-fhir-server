@@ -26,6 +26,7 @@ describe('models observation result', function () {
     };
 
     it('detect missing patient', shared.detectMissingPatient(model, samplesSet0[0]));
+    it('detect missing patient for update', shared.detectMissingPatientForUpdate(model, samplesSet0[0]));
 
     _.range(2).forEach(function (i) {
         it('create patient ' + i, shared.create(patientModel, patientSamples[i], [], {}, moments));
@@ -114,11 +115,12 @@ describe('models observation result', function () {
     it('read valid id missing', shared.readMissing(model, '123456789012345678901234'));
     it('read db error simulation, idToPatientKey', shared.readDbError(model, samplesSet0[0], 'idToPatientKey'));
     it('read db error simulation, getEntry', shared.readDbError(model, samplesSet0[0], 'getEntry'));
-    it('read db error simulation, idToPatientInfo (2)', shared.readDbError(model, samplesSet0[0], 'idToPatientInfo', function (secName) {
+    it('read db error simulation, entryToResource', shared.readGenFhirError(model, samplesSet0[0]));
+    it('read db error simulation, idToPatientKey (2)', shared.readDbError(model, samplesSet0[0], 'idToPatientKey', function (secName) {
         if (secName === 'vitals') {
             arguments[arguments.length - 1](null, null);
         } else {
-            arguments[arguments.length - 1](new Error('idToPatientInfo'));
+            arguments[arguments.length - 1](new Error('idToPatientKey'));
         }
     }));
 

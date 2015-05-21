@@ -26,6 +26,7 @@ describe('models condition', function () {
     };
 
     it('detect missing patient', shared.detectMissingPatient(model, samplesSet0[0]));
+    it('detect missing patient for update', shared.detectMissingPatientForUpdate(model, samplesSet0[0]));
 
     _.range(2).forEach(function (i) {
         it('create patient ' + i, shared.create(patientModel, patientSamples[i], [], {}, moments));
@@ -84,6 +85,7 @@ describe('models condition', function () {
     it('read valid id missing', shared.readMissing(model, '123456789012345678901234'));
     it('read db error simulation, idToPatientInfo', shared.readDbError(model, samplesSet0[0], 'idToPatientInfo'));
     it('read db error simulation, getEntry', shared.readDbError(model, samplesSet0[0], 'getEntry'));
+    it('read db error simulation, entryToResource', shared.readGenFhirError(model, samplesSet0[0]));
 
     _.range(samplesSet0.length).forEach(function (i) {
         it('read for patient-0 ' + i, shared.read(model, samplesSet0[i], moments, '1'));

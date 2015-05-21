@@ -5,6 +5,7 @@ var _ = require('lodash');
 var sinon = require('sinon');
 var moment = require('moment');
 var bbr = require('blue-button-record');
+var bbgen = require('blue-button-gen-fhir');
 
 var patientModel = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
@@ -47,11 +48,10 @@ methods.connectDatabase = function (dbName) {
 methods.detectMissingPatient = function (model, sample) {
     return function (done) {
         model.create(bbr, sample, function (err) {
-            if (err) {
-                done();
-            } else {
-                done(new Error('Missing patient not detected.'));
-            }
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('createPatientMissing');
+            done();
         });
     };
 };
@@ -292,6 +292,24 @@ methods.readDbError = function (model, sample, method, stubFn) {
     };
 };
 
+methods.readGenFhirError = function (model, sample) {
+    return function (done) {
+        var stubFn = function () {
+            return null;
+        };
+        var stub = sinon.stub(bbgen, 'entryToResource', stubFn);
+
+        var id = sample.id;
+        model.read(bbr, id, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('internalDbError');
+            stub.restore();
+            done();
+        });
+    };
+};
+
 methods.readNegative = function (model, sample) {
     var patientRefKey = this.patientRefKey;
     return function (done) {
@@ -397,6 +415,21 @@ methods.updateToCreate = function (model, sample, list, map, moments) {
                 list.push(sample.id);
                 done();
             }
+        });
+    };
+};
+
+methods.detectMissingPatientForUpdate = function (model, sample) {
+    var self = this;
+    return function (done) {
+        var sampleClone = _.cloneDeep(sample);
+        var id = self.manualId;
+        sampleClone.id = id;
+        model.update(bbr, sampleClone, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('createPatientMissing');
+            done();
         });
     };
 };
