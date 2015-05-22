@@ -69,9 +69,9 @@ exports.search = function (bbr, params, callback) {
             callback(errUtil.error('internalDbError', err.message));
         } else {
             var bundleEntry = results.map(function (result) {
-                var bundle = bbGenFhir.demographicsToFHIR(result);
+                var bundle = bbGenFhir.demographicsToFHIR(result.data);
                 var resource = bundle.entry[0];
-                resource.resource.id = result._id.toString();
+                resource.resource.id = result._id;
                 return resource;
             });
             var fhirResults = {

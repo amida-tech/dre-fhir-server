@@ -122,8 +122,8 @@ methods.search = function (bbr, params, callback) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
                     var bundleEntry = results.map(function (result) {
-                        var resource = bbGenFhir.entryToResource(sectionName, result);
-                        resource.id = result._id.toString();
+                        var resource = bbGenFhir.entryToResource(sectionName, result.data);
+                        resource.id = result._id;
                         resource[patientRefKey] = result._pt;
                         if (result._components && result._components.length) {
                             resource.related = result._components.map(function (component) {
