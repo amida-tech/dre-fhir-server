@@ -117,7 +117,12 @@ methods.search = function (bbr, params, callback) {
             };
             callback(null, fhirResults);
         } else {
-            bbr.search(sectionName, bbrParams, true, function (err, results) {
+            var searchSpec = {
+                section: sectionName,
+                query: bbrParams,
+                patientInfo: true
+            };
+            bbr.search(searchSpec, function (err, results) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {

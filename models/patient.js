@@ -64,7 +64,12 @@ var paramToBBRParamMap = {
 
 exports.search = function (bbr, params, callback) {
     var bbrParams = params ? paramsToBBRParams(params, paramToBBRParamMap) : {};
-    bbr.search('demographics', bbrParams, false, function (err, results) {
+    var searchSpec = {
+        section: 'demographics',
+        query: bbrParams,
+        patientInfo: false
+    };
+    bbr.search(searchSpec, function (err, results) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
         } else {
