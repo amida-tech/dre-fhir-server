@@ -64,7 +64,7 @@ var paramToBBRParamMap = {
 
 exports.search = function (bbr, params, callback) {
     var bbrParams = params ? paramsToBBRParams(params, paramToBBRParamMap) : {};
-    bbr.getMultiSection('demographics', bbrParams, false, function (err, results) {
+    bbr.search('demographics', bbrParams, false, function (err, results) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
         } else {

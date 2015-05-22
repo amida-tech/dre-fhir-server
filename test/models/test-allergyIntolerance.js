@@ -63,7 +63,7 @@ describe('models allergyIntolerance', function () {
     });
 
     it('search (no param)', shared.search(model, null, entryMapById, samplesSet0.length + samplesSet1.length));
-    it('search db error simulation, getMultiSection', shared.searchDbError(model, null, 'getMultiSection'));
+    it('search db error simulation, search', shared.searchDbError(model, null, 'search'));
 
     _.range(samplesSet0.length).forEach(function (i) {
         it('search by id for patient-0 ' + i, shared.searchById(model, samplesSet0[i], entryMapById, 1));

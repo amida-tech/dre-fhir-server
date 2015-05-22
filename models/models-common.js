@@ -117,7 +117,7 @@ methods.search = function (bbr, params, callback) {
             };
             callback(null, fhirResults);
         } else {
-            bbr.getMultiSection(sectionName, bbrParams, true, function (err, results) {
+            bbr.search(sectionName, bbrParams, true, function (err, results) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {

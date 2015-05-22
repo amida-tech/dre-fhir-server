@@ -43,7 +43,7 @@ describe('models patient', function () {
             value: "not"
         }
     }, patients, n));
-    it('search db error simulation, getMultiSection', shared.searchDbError(model, null, 'getMultiSection'));
+    it('search db error simulation, search', shared.searchDbError(model, null, 'search'));
 
     _.range(samples.length).forEach(function (i) {
         it('search patient ' + i + ' by id', shared.searchById(model, samples[i], patients, 1));
