@@ -19,6 +19,7 @@ module.exports = function (options) {
     options = options || {};
     result.patientRefKey = options.patientRefKey;
     result.manualId = '023456789012345678901234';
+    result.pageSize = options.pageSize;
     return result;
 };
 
@@ -32,10 +33,14 @@ methods.incrementManualId = function () {
 
 methods.connectDatabase = function (dbName) {
     return function (done) {
-        bbr.connectDatabase('localhost', {
+        var options = {
             dbName: dbName,
             fhir: true
-        }, function (err) {
+        };
+        if (this.pageSize) {
+            options.maxSearch = this.pageSize;
+        }
+        bbr.connectDatabase('localhost', options, function (err) {
             if (err) {
                 done(err);
             } else {
@@ -134,12 +139,14 @@ methods.assignPatient = function (sampleSet, patientSample) {
 };
 
 methods.search = function (model, params, map, count) {
+    var self = this;
     var patientRefKey = this.patientRefKey;
     return function (done) {
         model.search(bbr, params, function (err, bundle) {
             if (err) {
                 done(err);
             } else {
+                expect(bundle.type).to.equal('searchset');
                 expect(bundle.entry).to.have.length(count);
                 for (var j = 0; j < count; ++j) {
                     var dbResource = bundle.entry[j].resource;
@@ -147,6 +154,9 @@ methods.search = function (model, params, map, count) {
                         delete dbResource[patientRefKey].display;
                     }
                     expect(dbResource).to.deep.equal(map[dbResource.id]);
+                }
+                if (self.pageSize <= count) {
+                    expect(bundle.link).not.to.exist;
                 }
                 done();
             }

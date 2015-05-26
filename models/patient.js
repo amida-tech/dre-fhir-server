@@ -69,7 +69,7 @@ exports.search = function (bbr, params, callback) {
         query: bbrParams,
         patientInfo: false
     };
-    bbr.search(searchSpec, function (err, results) {
+    bbr.search(searchSpec, function (err, results, searchInfo) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
         } else {
@@ -79,12 +79,8 @@ exports.search = function (bbr, params, callback) {
                 resource.resource.id = result._id;
                 return resource;
             });
-            var fhirResults = {
-                resourceType: 'Bundle',
-                total: bundleEntry.length,
-                entry: bundleEntry
-            };
-            callback(null, fhirResults);
+            var bundle = bundleUtil.toSearchSet(bundleEntry, searchInfo);
+            callback(null, bundle);
         }
     });
 };

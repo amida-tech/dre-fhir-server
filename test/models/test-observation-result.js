@@ -98,15 +98,6 @@ describe('models observation result', function () {
     it('search by missing patient (invalid id)', shared.searchByMissingPatient(model, 'abc', entryMapById));
     it('search by missing patient (valid id)', shared.searchByMissingPatient(model, '123456789012345678901234', entryMapById));
     it('search by patient db error, idToPatientKey', shared.searchByPatientDbError(model, patientSamples[0], 'idToPatientKey'));
-    var firstCall = true;
-    it('search by patient, db error simulation, idToPatientKey', shared.searchByPatientDbError(model, patientSamples[0], 'idToPatientKey', function () {
-        if (firstCall) {
-            firstCall = false;
-            arguments[arguments.length - 1](null, null);
-        } else {
-            arguments[arguments.length - 1](new Error('idToPatientKey'));
-        }
-    }));
 
     it('search by patient-0', shared.searchByPatient(model, patientSamples[0], entryMapById, samplesSet0.length));
     it('search by patient-1', shared.searchByPatient(model, patientSamples[1], entryMapById, samplesSet1.length));

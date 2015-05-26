@@ -8,9 +8,9 @@ var _ = require('lodash');
 
 var modelsUtil = require('./models-util');
 var errUtil = require('../lib/error-util');
+var bundleUtil = require('../lib/bundle-util');
 
 var bbudt = bbu.datetime;
-var paramsToBBRParams = modelsUtil.paramsToBBRParams;
 
 var methods = {};
 
@@ -81,79 +81,8 @@ var paramToBBRParamMap = {
     'subject': 'pat_key'
 };
 
-var paramsTransform = function (bbr, patientRefKey, params, callback) {
-    if (params) {
-        params = _.cloneDeep(params);
-        if (params[patientRefKey]) {
-            bbr.idToPatientKey('demographics', params[patientRefKey].value, function (err, keyInfo) {
-                if (err) {
-                    callback(errUtil.error('internalDbError', err.message));
-                } else if (!keyInfo || keyInfo.invalid) {
-                    callback(null, null);
-                } else {
-                    params[patientRefKey].value = keyInfo.key;
-                    callback(null, paramsToBBRParams(params, paramToBBRParamMap));
-                }
-            });
-        } else {
-            callback(null, paramsToBBRParams(params, paramToBBRParamMap));
-        }
-    } else {
-        callback(null, {});
-    }
-};
-
 methods.search = function (bbr, params, callback) {
-    var sectionName = this.sectionName;
-    var patientRefKey = this.patientRefKey;
-    paramsTransform(bbr, patientRefKey, params, function (err, bbrParams) {
-        if (err) {
-            callback(err);
-        } else if (!bbrParams) {
-            var fhirResults = {
-                resourceType: 'Bundle',
-                total: 0,
-                entry: []
-            };
-            callback(null, fhirResults);
-        } else {
-            var searchSpec = {
-                section: sectionName,
-                query: bbrParams,
-                patientInfo: true
-            };
-            bbr.search(searchSpec, function (err, results) {
-                if (err) {
-                    callback(errUtil.error('internalDbError', err.message));
-                } else {
-                    var bundleEntry = results.map(function (result) {
-                        var resource = bbGenFhir.entryToResource(sectionName, result.data);
-                        resource.id = result._id;
-                        resource[patientRefKey] = result._pt;
-                        if (result._components && result._components.length) {
-                            resource.related = result._components.map(function (component) {
-                                return {
-                                    target: {
-                                        reference: component
-                                    },
-                                    type: "has-component"
-                                };
-                            });
-                        }
-                        return {
-                            resource: resource
-                        };
-                    });
-                    var fhirResults = {
-                        resourceType: 'Bundle',
-                        total: bundleEntry.length,
-                        entry: bundleEntry
-                    };
-                    callback(null, fhirResults);
-                }
-            });
-        }
-    });
+    modelsUtil.searchResourceWithPatient(bbr, params, this.sectionName, this.patientRefKey, paramToBBRParamMap, callback);
 };
 
 methods.read = function (bbr, id, callback) {
