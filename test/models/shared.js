@@ -32,10 +32,12 @@ methods.incrementManualId = function () {
 };
 
 methods.connectDatabase = function (dbName) {
+    var self = this;
     return function (done) {
         var options = {
             dbName: dbName,
-            fhir: true
+            fhir: true,
+            maxSearch: self.pageSize
         };
         if (this.pageSize) {
             options.maxSearch = this.pageSize;
@@ -155,9 +157,81 @@ methods.search = function (model, params, map, count) {
                     }
                     expect(dbResource).to.deep.equal(map[dbResource.id]);
                 }
-                if (self.pageSize <= count) {
-                    expect(bundle.link).not.to.exist;
+                expect(bundle.link).not.to.exist;
+                done();
+            }
+        });
+    };
+};
+
+methods.searchPagedFirst = function (model, params, map, count, searchKey) {
+    var pageSize = this.pageSize;
+    var self = this;
+    var patientRefKey = this.patientRefKey;
+    return function (done) {
+        model.search(bbr, params, function (err, bundle, searchInfo) {
+            if (err) {
+                done(err);
+            } else {
+                expect(bundle.type).to.equal('searchset');
+                expect(bundle.total).to.equal(count);
+                expect(bundle.entry).to.have.length(pageSize);
+                for (var j = 0; j < pageSize; ++j) {
+                    var dbResource = bundle.entry[j].resource;
+                    if (patientRefKey) {
+                        delete dbResource[patientRefKey].display;
+                    }
+                    expect(dbResource).to.deep.equal(map[dbResource.id]);
                 }
+                expect(searchInfo.pageSize).to.equal(pageSize);
+                expect(searchInfo.searchId).to.exist;
+                expect(searchInfo.page).to.equal(0);
+                self.search[searchKey] = searchInfo.searchId;
+                done();
+            }
+        });
+    };
+};
+
+methods.searchIdPage = function (model, list, map, fullCount, searchKey, pageNo) {
+    var pageSize = this.pageSize;
+    var self = this;
+    var patientRefKey = this.patientRefKey;
+    return function (done) {
+        var params = {
+            searchId: {
+                value: self.search[searchKey],
+            },
+            page: {
+                value: pageNo
+            }
+        };
+        var listClone = _.clone(list);
+        listClone.reverse();
+        model.search(bbr, params, function (err, bundle, searchInfo) {
+            if (err) {
+                done(err);
+            } else {
+                expect(bundle.type).to.equal('searchset');
+                expect(bundle.total).to.equal(searchInfo.total);
+                expect(bundle.total).to.equal(fullCount);
+                var count = pageSize;
+                if (bundle.total < (pageNo + 1) * pageSize) {
+                    count = bundle.total % pageSize;
+                }
+                expect(bundle.entry).to.have.length(count);
+                var offset = pageNo * pageSize;
+                for (var j = 0; j < count; ++j) {
+                    var dbResource = bundle.entry[j].resource;
+                    if (patientRefKey) {
+                        delete dbResource[patientRefKey].display;
+                    }
+                    expect(dbResource).to.deep.equal(map[dbResource.id]);
+                    expect(dbResource.id).to.equal(listClone[offset + j]);
+                }
+                expect(searchInfo.pageSize).to.equal(pageSize);
+                expect(searchInfo.searchId).to.equal(self.search[searchKey]);
+                expect(searchInfo.page).to.equal(pageNo);
                 done();
             }
         });

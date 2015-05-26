@@ -80,7 +80,7 @@ exports.search = function (bbr, params, callback) {
                 return resource;
             });
             var bundle = bundleUtil.toSearchSet(bundleEntry, searchInfo);
-            callback(null, bundle);
+            callback(null, bundle, searchInfo);
         }
     });
 };

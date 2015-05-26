@@ -104,45 +104,58 @@ var paramsTransform = function (bbr, patientRefKey, params, paramToBBRParamMap, 
     }
 };
 
-exports.searchResourceWithPatient = function (bbr, params, sectionInfo, patientRefKey, paramToBBRParamMap, callback) {
-    paramsTransform(bbr, patientRefKey, params, paramToBBRParamMap, function (err, bbrParams) {
+var searchWithSpec = function (bbr, searchSpec, patientRefKey, callback) {
+    bbr.search(searchSpec, function (err, results, searchInfo) {
         if (err) {
-            callback(err);
-        } else if (!bbrParams) {
-            var bundle = bundleUtil.toSearchSet([]);
-            callback(null, bundle);
+            callback(errUtil.error('internalDbError', err.message));
         } else {
-            var searchSpec = {
-                section: sectionInfo,
-                query: bbrParams,
-                patientInfo: true
-            };
-            bbr.search(searchSpec, function (err, results, searchInfo) {
-                if (err) {
-                    callback(errUtil.error('internalDbError', err.message));
-                } else {
-                    var bundleEntry = results.map(function (result) {
-                        var resource = bbGenFhir.entryToResource(result._section, result.data);
-                        resource.id = result._id;
-                        resource[patientRefKey] = result._pt;
-                        if (result._components && result._components.length) {
-                            resource.related = result._components.map(function (component) {
-                                return {
-                                    target: {
-                                        reference: component
-                                    },
-                                    type: "has-component"
-                                };
-                            });
-                        }
+            var bundleEntry = results.map(function (result) {
+                var resource = bbGenFhir.entryToResource(result._section, result.data);
+                resource.id = result._id;
+                resource[patientRefKey] = result._pt;
+                if (result._components && result._components.length) {
+                    resource.related = result._components.map(function (component) {
                         return {
-                            resource: resource
+                            target: {
+                                reference: component
+                            },
+                            type: "has-component"
                         };
                     });
-                    var bundle = bundleUtil.toSearchSet(bundleEntry, searchInfo);
-                    callback(null, bundle);
                 }
+                return {
+                    resource: resource
+                };
             });
+            var bundle = bundleUtil.toSearchSet(bundleEntry, searchInfo);
+            callback(null, bundle, searchInfo);
         }
     });
+
+};
+
+exports.searchResourceWithPatient = function (bbr, params, sectionInfo, patientRefKey, paramToBBRParamMap, callback) {
+    if (params && params.searchId) {
+        var searchSpec = {
+            searchId: params.searchId.value,
+            page: params.page.value
+        };
+        searchWithSpec(bbr, searchSpec, patientRefKey, callback);
+    } else {
+        paramsTransform(bbr, patientRefKey, params, paramToBBRParamMap, function (err, bbrParams) {
+            if (err) {
+                callback(err);
+            } else if (!bbrParams) {
+                var bundle = bundleUtil.toSearchSet([]);
+                callback(null, bundle);
+            } else {
+                var searchSpec = {
+                    section: sectionInfo,
+                    query: bbrParams,
+                    patientInfo: true
+                };
+                searchWithSpec(bbr, searchSpec, patientRefKey, callback);
+            }
+        });
+    }
 };
