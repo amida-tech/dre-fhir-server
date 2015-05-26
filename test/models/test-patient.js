@@ -1,5 +1,7 @@
 'use strict';
 
+var util = require('util');
+
 var chai = require('chai');
 var _ = require('lodash');
 var moment = require('moment');
@@ -8,11 +10,11 @@ var bbr = require('blue-button-record');
 var model = require('../../models/patient');
 var samples = require('../samples/patient-samples')();
 
-var shared = require('./shared')();
-
 var expect = chai.expect;
 
 describe('models patient', function () {
+    var shared = require('./shared')();
+
     before('connectDatabase', shared.connectDatabase('fhirpatientmodel'));
 
     var sample0Clone = _.cloneDeep(samples[0]);
@@ -138,6 +140,38 @@ describe('models patient', function () {
 
     it('read deleted for patient-0', shared.read(model, samples[n - 1], moments, '2', true));
     it('read deleted for patient-1', shared.read(model, samples[n - 2], moments, '2', true));
+
+    after(shared.clearDatabase);
+});
+
+describe('models patient search by page', function () {
+    var shared = require('./shared')({
+        pageSize: 5
+    });
+
+    before('connectDatabase', shared.connectDatabase('fhirapatientmodelpage'));
+
+    var samplesClone = _.flatten(_.times(4, function () {
+        return _.cloneDeep(samples);
+    }));
+
+    var moments = {
+        start: moment()
+    };
+
+    var patients = {};
+    var patientIds = [];
+
+    _.range(samplesClone.length).forEach(function (i) {
+        it('create patient ' + i, shared.create(model, samplesClone[i], patientIds, patients, moments));
+    });
+
+    it('search paged first (no param)', shared.searchPagedFirst(model, null, patients, samplesClone.length, 's0'));
+
+    _.range(5).forEach(function (pageNo) {
+        var title = util.format('search page: %s (no param)', pageNo);
+        it(title, shared.searchIdPage(model, patientIds, patients, samplesClone.length, 's0', pageNo));
+    });
 
     after(shared.clearDatabase);
 });

@@ -19,7 +19,7 @@ var bbudt = bbu.datetime;
 var paramsToBBRParams = modelsUtil.paramsToBBRParams;
 
 var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
-    var currPtKey = candidate + (index === 0 ? index : '');
+    var currPtKey = candidate + (index === 0 ? '' : index);
     bbr.patientKeyToId('demographics', currPtKey, function (err, id) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
@@ -62,13 +62,7 @@ var paramToBBRParamMap = {
     '_id': '_id'
 };
 
-exports.search = function (bbr, params, callback) {
-    var bbrParams = params ? paramsToBBRParams(params, paramToBBRParamMap) : {};
-    var searchSpec = {
-        section: 'demographics',
-        query: bbrParams,
-        patientInfo: false
-    };
+var searchWithSpec = function (bbr, searchSpec, callback) {
     bbr.search(searchSpec, function (err, results, searchInfo) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
@@ -83,6 +77,24 @@ exports.search = function (bbr, params, callback) {
             callback(null, bundle, searchInfo);
         }
     });
+};
+
+exports.search = function (bbr, params, callback) {
+    if (params && params.searchId) {
+        var searchSpecWId = {
+            searchId: params.searchId.value,
+            page: params.page.value
+        };
+        searchWithSpec(bbr, searchSpecWId, callback);
+    } else {
+        var bbrParams = params ? paramsToBBRParams(params, paramToBBRParamMap) : {};
+        var searchSpec = {
+            section: 'demographics',
+            query: bbrParams,
+            patientInfo: false
+        };
+        searchWithSpec(bbr, searchSpec, callback);
+    }
 };
 
 exports.read = function (bbr, id, callback) {

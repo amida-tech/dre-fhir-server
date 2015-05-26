@@ -1,5 +1,7 @@
 'use strict';
 
+var util = require('util');
+
 var chai = require('chai');
 var moment = require('moment');
 var bbr = require('blue-button-record');
@@ -10,13 +12,13 @@ var patientModel = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
 var _ = require('lodash');
 
-var shared = require('./shared')({
-    patientRefKey: 'subject'
-});
-
 var expect = chai.expect;
 
 describe('models observation vital', function () {
+    var shared = require('./shared')({
+        patientRefKey: 'subject'
+    });
+
     before('connectDatabase', shared.connectDatabase('fhirobservationvitalmodel'));
 
     var samplesSet0 = samples.set0();
@@ -155,6 +157,100 @@ describe('models observation vital', function () {
     it('read deleted for patient-1', shared.read(model, samplesSet1[n1], moments, '2', true));
 
     it('search (no param)', shared.search(model, null, entryMapById, n0 + n1));
+
+    after(shared.clearDatabase);
+});
+
+describe('models observation-vital search by page', function () {
+    var shared = require('./shared')({
+        patientRefKey: 'subject',
+        pageSize: 5
+    });
+
+    before('connectDatabase', shared.connectDatabase('fhirobservationvitalmodelpage'));
+
+    var samplesSet0Base = samples.set0();
+    var samplesSet0 = _.flatten(_.times(4, function (index) {
+        var clone = _.cloneDeep(samplesSet0Base);
+        if (index > 0) {
+            var offset = index * samplesSet0Base.length;
+            clone.forEach(function (obs) {
+                if (obs.related) {
+                    obs.related.forEach(function (r) {
+                        r.target.reference += offset;
+                    });
+                }
+            });
+        }
+        return clone;
+    }));
+    var samplesSet1Base = samples.set1();
+    var samplesSet1 = _.flatten(_.times(4, function (index) {
+        var clone = _.cloneDeep(samplesSet1Base);
+        if (index > 0) {
+            var offset = index * samplesSet1Base.length;
+            clone.forEach(function (obs) {
+                if (obs.related) {
+                    obs.related.forEach(function (r) {
+                        r.target.reference += offset;
+                    });
+                }
+            });
+        }
+        return clone;
+    }));
+
+    var moments = {
+        start: moment()
+    };
+
+    _.range(2).forEach(function (i) {
+        it('create patient ' + i, shared.create(patientModel, patientSamples[i], [], {}, moments));
+    }, this);
+
+    it('assign patient-0 to sample set-0', function () {
+        shared.assignPatient(samplesSet0, patientSamples[0]);
+    });
+
+    it('assign patient-1 to sample set-1', function () {
+        shared.assignPatient(samplesSet1, patientSamples[1]);
+    });
+
+    var entryMapById = {};
+    var entryIds = [];
+
+    var populatePanel = function (sample, entryIds, offset) {
+        sample.related.forEach(function (related) {
+            var index = related.target.reference;
+            related.target.reference = entryIds[index + offset];
+        });
+    };
+
+    _.range(0, samplesSet0.length).forEach(function (i) {
+        if (samplesSet0[i].related) {
+            it('populate panel for patient-0 ' + i, function () {
+                populatePanel(samplesSet0[i], entryIds, 0);
+            });
+        }
+        it('create for patient-0 ' + i, shared.create(model, samplesSet0[i], entryIds, entryMapById, moments));
+    });
+
+    _.range(0, samplesSet1.length).forEach(function (i) {
+        if (samplesSet1[i].related) {
+            it('populate panel for patient-1 ' + i, function () {
+                populatePanel(samplesSet1[i], entryIds, samplesSet0.length);
+            });
+        }
+
+        it('create for patient-1 ' + i, shared.create(model, samplesSet1[i], entryIds, entryMapById, moments));
+    });
+
+    it('search paged first (no param)', shared.searchPagedFirst(model, null, entryMapById, samplesSet0.length + samplesSet1.length, 's0'));
+
+    _.range(5).forEach(function (pageNo) {
+        var title = util.format('search page: %s (no param)', pageNo);
+        it(title, shared.searchIdPage(model, entryIds, entryMapById, samplesSet0.length + samplesSet1.length, 's0', pageNo));
+    });
 
     after(shared.clearDatabase);
 });
