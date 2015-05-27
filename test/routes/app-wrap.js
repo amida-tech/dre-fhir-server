@@ -33,13 +33,17 @@ var base = {
     }
 };
 
-exports.instance = function (dbName) {
+exports.instance = function (dbName, pageSize) {
     var inst = Object.create(base);
     inst.dbName = dbName;
+    var db = {
+        dbName: dbName
+    };
+    if (pageSize) {
+        db.maxSearch = pageSize;
+    }
     inst.app = app({
-        db: {
-            dbName: dbName
-        }
+        db: db
     });
     return inst;
 };
