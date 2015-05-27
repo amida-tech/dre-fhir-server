@@ -42,14 +42,36 @@ exports.putPatientRefs = function (resourceSets, patients, patientProperty) {
     });
 };
 
-exports.putPanelElementRefs = function (resourceSets) {
-    resourceSets.forEach(function (resources) {
-        _.range(resources.panelStart, resources.length).forEach(function (index) {
-            var resource = resources[index];
-            resource.related.forEach(function (related) {
-                var relatedIndex = related.target.reference;
-                related.target.reference = resources[relatedIndex].id;
-            });
+exports.putResourceRelatedRefs = function (resources, index) {
+    var resource = resources[index];
+    if (resource.related) {
+        resource.related.forEach(function (related) {
+            var relatedIndex = related.target.reference;
+            related.target.reference = resources[relatedIndex].id;
         });
+    }
+};
+
+exports.multiplySamples = function (times, samples) {
+    var n = samples.length;
+    var result = _.range(times).map(function (i) {
+        var offset = i * n;
+        return _.range(n).map(function (j) {
+            var clone = _.cloneDeep(samples[j]);
+            if (offset && clone.related) {
+                clone.related.forEach(function (related) {
+                    var relatedIndex = related.target.reference;
+                    related.target.reference = relatedIndex + offset;
+                });
+            }
+            return clone;
+        });
+    });
+    return _.flatten(result);
+};
+
+exports.multiplySampleSets = function (times, sampleSets) {
+    return sampleSets.map(function (samples) {
+        return exports.multiplySamples(times, samples);
     });
 };

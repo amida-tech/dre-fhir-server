@@ -154,15 +154,7 @@ describe(testTitle + ' search by page', function () {
         resourceType: 'Patient'
     });
 
-    var timesClone = function (times, arr) {
-        var n = arr.length;
-        return _.range(n * times).map(function (i) {
-            var j = i % n;
-            return _.cloneDeep(arr[j]);
-        });
-    };
-
-    var resourceSets = [timesClone(4, samples.set0()), timesClone(4, samples.set1())];
+    var resourceSets = common.multiplySampleSets(4, [samples.set0(), samples.set1()]);
     var moments = {
         start: moment()
     };
