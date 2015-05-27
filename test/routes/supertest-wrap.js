@@ -5,10 +5,13 @@ var util = require('util');
 var chai = require('chai');
 var _ = require('lodash');
 var moment = require('moment');
+var sinon = require('sinon');
 
 var expect = chai.expect;
 
 var base = {};
+
+var errUtil = require('../../lib/error-util.js');
 
 module.exports = function (options) {
     var result = Object.create(base);
@@ -21,6 +24,8 @@ module.exports = function (options) {
     result.entryMapById = {};
     result.entryIds = [];
     result.manualId = '023456789012345678901234';
+    result.pageSize = options.pageSize;
+    result.searchKeys = {};
 
     return result;
 };
@@ -247,12 +252,62 @@ base._search = function (req, expectedCount, query, done) {
         .expect(function (res) {
             var bundle = res.body;
             expect(bundle.entry).to.have.length(expectedCount);
+            expect(bundle.link).not.to.exist;
+            expect(bundle.total).to.equal(expectedCount);
             for (var j = 0; j < expectedCount; ++j) {
                 var serverResource = bundle.entry[j].resource;
                 if (self.readTransform) {
                     self.readTransform(serverResource);
                 }
                 expect(serverResource).to.deep.equal(self.entryMapById[serverResource.id]);
+            }
+        })
+        .end(done);
+};
+
+var relations = function (link) {
+    return link.reduce(function (r, e) {
+        r[e.relation] = e.url;
+        return r;
+    }, {});
+};
+
+base._searchByPage = function (req, expectedCount, query, pageNo, searchKey, done) {
+    var self = this;
+    if (query) {
+        req.query(query);
+    }
+    var entryIdsClone = _.clone(this.entryIds);
+    entryIdsClone.reverse();
+    req.expect(200)
+        .expect(function (res) {
+            var bundle = res.body;
+            var lastPage = Math.ceil(expectedCount / self.pageSize) - 1;
+            var pageSize = pageNo === lastPage ? expectedCount % self.pageSize : self.pageSize;
+            expect(bundle.entry).to.have.length(pageSize);
+            expect(bundle.link).to.exist;
+            var rels = relations(bundle.link);
+            var relKeys = Object.keys(rels);
+            relKeys.sort();
+            if (pageNo === 0) {
+                expect(relKeys).to.deep.equal(['first', 'last', 'next', 'self']);
+            } else if (pageNo === lastPage) {
+                expect(relKeys).to.deep.equal(['first', 'last', 'prev', 'self']);
+            } else {
+                expect(relKeys).to.deep.equal(['first', 'last', 'next', 'prev', 'self']);
+            }
+            expect(bundle.total).to.equal(expectedCount);
+            var offset = self.pageSize * pageNo;
+            for (var j = 0; j < pageSize; ++j) {
+                var serverResource = bundle.entry[j].resource;
+                if (self.readTransform) {
+                    self.readTransform(serverResource);
+                }
+                expect(serverResource).to.deep.equal(self.entryMapById[serverResource.id]);
+                expect(serverResource.id).to.equal(entryIdsClone[j + offset]);
+            }
+            if (searchKey) {
+                self.searchKeys[searchKey] = rels;
             }
         })
         .end(done);
@@ -268,4 +323,31 @@ base.search = function (expectedCount, query, done) {
     var path = util.format('/fhir/%s', this.resourceType);
     var req = this.api.get(path);
     this._search(req, expectedCount, query, done);
+};
+
+base.searchByPageInitial = function (expectedCount, query, searchKey, done) {
+    var path = util.format('/fhir/%s', this.resourceType);
+    var req = this.api.get(path);
+    this._searchByPage(req, expectedCount, query, 0, searchKey, done);
+};
+
+base.searchByPage = function (expectedCount, query, searchKey, relation, pageNo, toSearchKey, done) {
+    var path = this.searchKeys[searchKey][relation];
+    var req = this.api.get(path);
+    this._searchByPage(req, expectedCount, query, pageNo, toSearchKey, done);
+};
+
+base.searchError = function (model, done) {
+    var path = util.format('/fhir/%s', this.resourceType);
+    var req = this.api.get(path);
+    var stub = sinon.stub(model, 'search', function () {
+        var err = errUtil.error('internalDbError', 'searcherror');
+        arguments[arguments.length - 1](err);
+    });
+    var self = this;
+    req.expect(500)
+        .expect(function (res) {
+            stub.restore();
+        })
+        .end(done);
 };

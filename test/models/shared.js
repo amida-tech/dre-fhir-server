@@ -5,6 +5,7 @@ var _ = require('lodash');
 var sinon = require('sinon');
 var moment = require('moment');
 var bbr = require('blue-button-record');
+var bbgen = require('blue-button-gen-fhir');
 
 var patientModel = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
@@ -18,6 +19,7 @@ module.exports = function (options) {
     options = options || {};
     result.patientRefKey = options.patientRefKey;
     result.manualId = '023456789012345678901234';
+    result.pageSize = options.pageSize;
     return result;
 };
 
@@ -30,11 +32,17 @@ methods.incrementManualId = function () {
 };
 
 methods.connectDatabase = function (dbName) {
+    var self = this;
     return function (done) {
-        bbr.connectDatabase('localhost', {
+        var options = {
             dbName: dbName,
-            fhir: true
-        }, function (err) {
+            fhir: true,
+            maxSearch: self.pageSize
+        };
+        if (this.pageSize) {
+            options.maxSearch = this.pageSize;
+        }
+        bbr.connectDatabase('localhost', options, function (err) {
             if (err) {
                 done(err);
             } else {
@@ -47,11 +55,10 @@ methods.connectDatabase = function (dbName) {
 methods.detectMissingPatient = function (model, sample) {
     return function (done) {
         model.create(bbr, sample, function (err) {
-            if (err) {
-                done();
-            } else {
-                done(new Error('Missing patient not detected.'));
-            }
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('createPatientMissing');
+            done();
         });
     };
 };
@@ -134,12 +141,14 @@ methods.assignPatient = function (sampleSet, patientSample) {
 };
 
 methods.search = function (model, params, map, count) {
+    var self = this;
     var patientRefKey = this.patientRefKey;
     return function (done) {
         model.search(bbr, params, function (err, bundle) {
             if (err) {
                 done(err);
             } else {
+                expect(bundle.type).to.equal('searchset');
                 expect(bundle.entry).to.have.length(count);
                 for (var j = 0; j < count; ++j) {
                     var dbResource = bundle.entry[j].resource;
@@ -148,6 +157,81 @@ methods.search = function (model, params, map, count) {
                     }
                     expect(dbResource).to.deep.equal(map[dbResource.id]);
                 }
+                expect(bundle.link).not.to.exist;
+                done();
+            }
+        });
+    };
+};
+
+methods.searchPagedFirst = function (model, params, map, count, searchKey) {
+    var pageSize = this.pageSize;
+    var self = this;
+    var patientRefKey = this.patientRefKey;
+    return function (done) {
+        model.search(bbr, params, function (err, bundle, searchInfo) {
+            if (err) {
+                done(err);
+            } else {
+                expect(bundle.type).to.equal('searchset');
+                expect(bundle.total).to.equal(count);
+                expect(bundle.entry).to.have.length(pageSize);
+                for (var j = 0; j < pageSize; ++j) {
+                    var dbResource = bundle.entry[j].resource;
+                    if (patientRefKey) {
+                        delete dbResource[patientRefKey].display;
+                    }
+                    expect(dbResource).to.deep.equal(map[dbResource.id]);
+                }
+                expect(searchInfo.pageSize).to.equal(pageSize);
+                expect(searchInfo.searchId).to.exist;
+                expect(searchInfo.page).to.equal(0);
+                self.search[searchKey] = searchInfo.searchId;
+                done();
+            }
+        });
+    };
+};
+
+methods.searchIdPage = function (model, list, map, fullCount, searchKey, pageNo) {
+    var pageSize = this.pageSize;
+    var self = this;
+    var patientRefKey = this.patientRefKey;
+    return function (done) {
+        var params = {
+            searchId: {
+                value: self.search[searchKey],
+            },
+            page: {
+                value: pageNo
+            }
+        };
+        var listClone = _.clone(list);
+        listClone.reverse();
+        model.search(bbr, params, function (err, bundle, searchInfo) {
+            if (err) {
+                done(err);
+            } else {
+                expect(bundle.type).to.equal('searchset');
+                expect(bundle.total).to.equal(searchInfo.total);
+                expect(bundle.total).to.equal(fullCount);
+                var count = pageSize;
+                if (bundle.total < (pageNo + 1) * pageSize) {
+                    count = bundle.total % pageSize;
+                }
+                expect(bundle.entry).to.have.length(count);
+                var offset = pageNo * pageSize;
+                for (var j = 0; j < count; ++j) {
+                    var dbResource = bundle.entry[j].resource;
+                    if (patientRefKey) {
+                        delete dbResource[patientRefKey].display;
+                    }
+                    expect(dbResource).to.deep.equal(map[dbResource.id]);
+                    expect(dbResource.id).to.equal(listClone[offset + j]);
+                }
+                expect(searchInfo.pageSize).to.equal(pageSize);
+                expect(searchInfo.searchId).to.equal(self.search[searchKey]);
+                expect(searchInfo.page).to.equal(pageNo);
                 done();
             }
         });
@@ -292,6 +376,24 @@ methods.readDbError = function (model, sample, method, stubFn) {
     };
 };
 
+methods.readGenFhirError = function (model, sample) {
+    return function (done) {
+        var stubFn = function () {
+            return null;
+        };
+        var stub = sinon.stub(bbgen, 'entryToResource', stubFn);
+
+        var id = sample.id;
+        model.read(bbr, id, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('internalDbError');
+            stub.restore();
+            done();
+        });
+    };
+};
+
 methods.readNegative = function (model, sample) {
     var patientRefKey = this.patientRefKey;
     return function (done) {
@@ -397,6 +499,21 @@ methods.updateToCreate = function (model, sample, list, map, moments) {
                 list.push(sample.id);
                 done();
             }
+        });
+    };
+};
+
+methods.detectMissingPatientForUpdate = function (model, sample) {
+    var self = this;
+    return function (done) {
+        var sampleClone = _.cloneDeep(sample);
+        var id = self.manualId;
+        sampleClone.id = id;
+        model.update(bbr, sampleClone, function (err) {
+            expect(err).to.exist;
+            expect(err.codeDetail).to.exist;
+            expect(err.codeDetail.key).to.equal('createPatientMissing');
+            done();
         });
     };
 };

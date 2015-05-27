@@ -7,6 +7,13 @@ module.exports = function (searchParam) {
         return r;
     }, {});
 
+    ['searchId', 'page'].forEach(function (searchParam) {
+        searchParamDict[searchParam] = {
+            name: searchParam,
+            type: 'string'
+        };
+    });
+
     return function (req, res, next) {
         var fhirParams = req.fhirParams = {};
         var query = req.query;

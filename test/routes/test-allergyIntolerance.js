@@ -10,6 +10,8 @@ var supertestWrap = require('./supertest-wrap');
 var appWrap = require('./app-wrap');
 var common = require('./common');
 
+var model = require('../../models/allergyIntolerance');
+
 var fn = common.generateTestItem;
 var fnId = common.searchById;
 var fnPt = common.searchByPatient;
@@ -64,6 +66,7 @@ describe(testTitle, function () {
         }, this);
     }, this);
 
+    it('search error', fn(r, r.searchError, [model]));
     var n = resourceSets[0].length + resourceSets[1].length;
     it('search all using get', fn(r, r.search, [n, {}]));
     it('search all using post', fn(r, r.searchByPost, [n, {}]));
@@ -131,6 +134,79 @@ describe(testTitle, function () {
 
     it('read deleted last resource for patient 0', fn(r, r.read, [resourceSets[0][n0], moments, '2', true]));
     it('read deleted last resource for patient 1', fn(r, r.read, [resourceSets[1][n1], moments, '2', true]));
+
+    after(fn(appw, appw.cleanUp));
+});
+
+describe(testTitle + ' search by page', function () {
+    var dbName = util.format('fhir%sapipage', resourceType.toLowerCase());
+    var appw = appWrap.instance(dbName, 5);
+    var r = supertestWrap({
+        appWrap: appw,
+        resourceType: resourceType,
+        readTransform: function (resource) {
+            delete resource[patientProperty].display;
+        },
+        pageSize: 5
+    });
+    var pt = supertestWrap({
+        appWrap: appw,
+        resourceType: 'Patient'
+    });
+
+    var resourceSets = common.multiplySampleSets(4, [samples.set0(), samples.set1()]);
+    var moments = {
+        start: moment()
+    };
+
+    before(fn(appw, appw.start));
+
+    it('check config (inits database as well)', fn(r, r.config));
+
+    it('clear database', fn(appw, appw.cleardb));
+
+    _.range(2).forEach(function (index) {
+        var title = util.format('create patient %s', index);
+        it(title, fn(pt, pt.create, [patientSamples[index], moments]));
+    }, this);
+
+    it('assign patient refs to all resources', function () {
+        common.putPatientRefs(resourceSets, patientSamples, patientProperty);
+    });
+
+    _.range(2).forEach(function (i) {
+        _.range(resourceSets[i].length).forEach(function (j) {
+            var title = util.format('create resource %s for patient %s', j, i);
+            it(title, fn(r, r.create, [resourceSets[i][j], moments]));
+        }, this);
+    }, this);
+
+    var n = resourceSets[0].length + resourceSets[1].length;
+    var lastPage = Math.ceil(n / 5) - 1;
+    it('search by page initial call', fn(r, r.searchByPageInitial, [n, {}, "initial"]));
+
+    describe('initial call links', function () {
+        it('first', fn(r, r.searchByPage, [n, {}, 'initial', 'first', 0, null]));
+        it('last', fn(r, r.searchByPage, [n, {}, 'initial', 'last', lastPage, null]));
+        it('self', fn(r, r.searchByPage, [n, {}, 'initial', 'self', 0, 'page0']));
+        it('next', fn(r, r.searchByPage, [n, {}, 'initial', 'next', 1, 'next0']));
+        it('next verify', fn(r, r.searchByPage, [n, {}, 'next0', 'self', 1, null]));
+    });
+
+    describe('next transverse', function () {
+        _.range(0, lastPage + 1).forEach(function (pageNo) {
+            var pt = 'page' + pageNo;
+            it(pt + ' link first', fn(r, r.searchByPage, [n, {}, pt, 'first', 0, null]));
+            it(pt + ' link last', fn(r, r.searchByPage, [n, {}, pt, 'last', lastPage, null]));
+            it(pt + ' link self', fn(r, r.searchByPage, [n, {}, pt, 'self', pageNo, null]));
+            if (pageNo > 0) {
+                it(pt + ' link prev', fn(r, r.searchByPage, [n, {}, pt, 'prev', pageNo - 1, null]));
+            }
+            if (pageNo < lastPage) {
+                it(pt + ' link next', fn(r, r.searchByPage, [n, {}, pt, 'next', pageNo + 1, 'page' + (pageNo + 1)]));
+            }
+        });
+    });
 
     after(fn(appw, appw.cleanUp));
 });

@@ -1,8 +1,10 @@
 'use strict';
 
-var express = require('express');
 var path = require('path');
 var util = require('util');
+var querystring = require('querystring');
+
+var express = require('express');
 
 var fpp = require('../middleware/fhir-param-parser');
 var errUtil = require('../lib/error-util');
@@ -43,6 +45,50 @@ module.exports = (function () {
         res.status(statusCode);
         var operationOutcome = errUtil.toOperationOutcome(err);
         res.send(operationOutcome);
+    };
+
+    var linkUrl = function (baseUrl, searchId, page) {
+        var query = {
+            searchId: searchId,
+            page: page.toString()
+        };
+        var qs = querystring.stringify(query);
+        var result = baseUrl + '?' + qs;
+        return result;
+    };
+
+    var updateBundleLink = function (baseUrl, bundle, searchInfo) {
+        var searchId = searchInfo && searchInfo.searchId;
+        if (searchId) {
+            var page = parseInt(searchInfo.page, 10);
+            var lastPage = Math.ceil(searchInfo.total / searchInfo.pageSize) - 1;
+            var link = [];
+            link.push({
+                relation: 'first',
+                url: linkUrl(baseUrl, searchId, 0)
+            });
+            if (page > 0) {
+                link.push({
+                    relation: 'prev',
+                    url: linkUrl(baseUrl, searchId, page - 1)
+                });
+            }
+            link.push({
+                relation: 'self',
+                url: linkUrl(baseUrl, searchId, page)
+            });
+            if (page < lastPage) {
+                link.push({
+                    relation: 'next',
+                    url: linkUrl(baseUrl, searchId, page + 1)
+                });
+            }
+            link.push({
+                relation: 'last',
+                url: linkUrl(baseUrl, searchId, lastPage)
+            });
+            bundle.link = link;
+        }
     };
 
     var interactionImplementation = {
@@ -126,11 +172,12 @@ module.exports = (function () {
                 fpp(searchParam),
                 function (req, res) {
                     var c = req.app.get('connection');
-                    var params = req.fhirParams || {};
-                    model.search(c, params, function (err, bundle) {
+                    var params = req.fhirParams;
+                    model.search(c, params, function (err, bundle, searchInfo) {
                         if (err) {
                             handleError(res, err);
                         } else {
+                            updateBundleLink(req.baseUrl + req.path, bundle, searchInfo);
                             res.status(200);
                             Object.keys(req.query).forEach(function (key) {
                                 res.set(key, req.query[key]);

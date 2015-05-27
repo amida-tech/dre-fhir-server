@@ -2,11 +2,14 @@
 
 var util = require('util');
 
+var _ = require('lodash');
 var bbu = require('blue-button-util');
+var bbGenFhir = require('blue-button-gen-fhir');
 
 var bbudt = bbu.datetime;
 
 var errUtil = require('../lib/error-util');
+var bundleUtil = require('../lib/bundle-util');
 
 exports.saveResourceAsSource = function (connection, ptKey, resource, callback) {
     var resourceAsText = JSON.stringify(resource, undefined, 4);
@@ -45,7 +48,7 @@ exports.findPatientKey = function (connection, resource, patientProperty, callba
     }
 };
 
-exports.paramsToBBRParams = (function () {
+var paramsToBBRParams = exports.paramsToBBRParams = (function () {
     var prefixMap = {
         '<': '$lt',
         '>': '$gt',
@@ -78,3 +81,81 @@ exports.paramsToBBRParams = (function () {
         return queryObject;
     };
 })();
+
+var paramsTransform = function (bbr, patientRefKey, params, paramToBBRParamMap, callback) {
+    if (params) {
+        params = _.cloneDeep(params);
+        if (params[patientRefKey]) {
+            bbr.idToPatientKey('demographics', params[patientRefKey].value, function (err, keyInfo) {
+                if (err) {
+                    callback(errUtil.error('internalDbError', err.message));
+                } else if (!keyInfo || keyInfo.invalid) {
+                    callback(null, null);
+                } else {
+                    params[patientRefKey].value = keyInfo.key;
+                    callback(null, paramsToBBRParams(params, paramToBBRParamMap));
+                }
+            });
+        } else {
+            callback(null, paramsToBBRParams(params, paramToBBRParamMap));
+        }
+    } else {
+        callback(null, {});
+    }
+};
+
+var searchWithSpec = function (bbr, searchSpec, patientRefKey, callback) {
+    bbr.search(searchSpec, function (err, results, searchInfo) {
+        if (err) {
+            callback(errUtil.error('internalDbError', err.message));
+        } else {
+            var bundleEntry = results.map(function (result) {
+                var resource = bbGenFhir.entryToResource(result._section, result.data);
+                resource.id = result._id;
+                resource[patientRefKey] = result._pt;
+                if (result._components && result._components.length) {
+                    resource.related = result._components.map(function (component) {
+                        return {
+                            target: {
+                                reference: component
+                            },
+                            type: "has-component"
+                        };
+                    });
+                }
+                return {
+                    resource: resource
+                };
+            });
+            var bundle = bundleUtil.toSearchSet(bundleEntry, searchInfo);
+            callback(null, bundle, searchInfo);
+        }
+    });
+
+};
+
+exports.searchResourceWithPatient = function (bbr, params, sectionInfo, patientRefKey, paramToBBRParamMap, callback) {
+    if (params && params.searchId) {
+        var searchSpec = {
+            searchId: params.searchId.value,
+            page: params.page.value
+        };
+        searchWithSpec(bbr, searchSpec, patientRefKey, callback);
+    } else {
+        paramsTransform(bbr, patientRefKey, params, paramToBBRParamMap, function (err, bbrParams) {
+            if (err) {
+                callback(err);
+            } else if (!bbrParams) {
+                var bundle = bundleUtil.toSearchSet([]);
+                callback(null, bundle);
+            } else {
+                var searchSpec = {
+                    section: sectionInfo,
+                    query: bbrParams,
+                    patientInfo: true
+                };
+                searchWithSpec(bbr, searchSpec, patientRefKey, callback);
+            }
+        });
+    }
+};
