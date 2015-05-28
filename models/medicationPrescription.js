@@ -1,6 +1,8 @@
 'use strict';
 
 var util = require('util');
+
+var _ = require('lodash');
 var bbFhir = require('blue-button-fhir');
 
 var modelsCommon = require('./models-common');
@@ -12,11 +14,11 @@ module.exports = exports = modelsCommon({
     patientRefKey: 'patient'
 });
 
-exports.resourceToModelEntry = function (resource, callback) {
+exports.resourceToModelEntry = function (bbr, resource, callback) {
     var bundle = bundleUtil.toBundle(resource);
     var model = bbFhir.toModel(bundle);
-    if (model && model.data && model.data.medications) {
-        var medication = model.data.medications[0];
+    var medication = model && _.get(model, 'data.medications[0]');
+    if (medication) {
         callback(null, medication);
     } else {
         var msg = util.format('%s resource cannot be parsed', resource.resourceType);

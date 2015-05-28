@@ -33,7 +33,7 @@ var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
 };
 
 exports.createShared = function (bbr, resource, id, callback) {
-    exports.resourceToModelEntry(resource, function (err, demographics) {
+    exports.resourceToModelEntry(bbr, resource, function (err, demographics) {
         if (err) {
             callback(err);
         } else {

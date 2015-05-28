@@ -21,7 +21,7 @@ module.exports = function (options) {
     return result;
 };
 
-methods.resourceToModelEntry = function (resource, callback) {
+methods.resourceToModelEntry = function (bbr, resource, callback) {
     var result = bbFhir.resourceToModelEntry(resource, this.sectionName);
     if (result) {
         callback(null, result);
@@ -50,7 +50,7 @@ methods.saveNewResource = function (bbr, ptKey, resource, section, callback) {
 
 methods.createShared = function (bbr, resource, id, callback) {
     var self = this;
-    this.resourceToModelEntry(resource, function (err, entry) {
+    this.resourceToModelEntry(bbr, resource, function (err, entry) {
         if (err) {
             callback(err);
         } else {
@@ -146,7 +146,7 @@ methods.read = function (bbr, id, callback) {
 methods.update = function (bbr, resource, callback) {
     var self = this;
     var sectionName = this.sectionName;
-    this.resourceToModelEntry(resource, function (err, entry) {
+    this.resourceToModelEntry(bbr, resource, function (err, entry) {
         if (err) {
             callback(err);
         } else {
