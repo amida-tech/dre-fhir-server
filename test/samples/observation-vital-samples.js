@@ -8,8 +8,6 @@ exports.set0 = function () {
     return _.cloneDeep(observations);
 };
 
-exports.panelStart0 = 5;
-
 exports.set1 = function () {
     var set = _.cloneDeep(observations);
     for (var i = 0; i < 5; ++i) {
@@ -18,8 +16,6 @@ exports.set1 = function () {
     }
     return set;
 };
-
-exports.panelStart1 = 5;
 
 observations = [{
     "id": "Observation/3",

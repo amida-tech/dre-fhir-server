@@ -587,3 +587,14 @@ methods.clearDatabase = function (done) {
         }
     });
 };
+
+methods.populateRelated = function (sample, entryIds, offset) {
+    return function () {
+        if (sample.related) {
+            sample.related.forEach(function (related) {
+                var index = related.target.reference;
+                related.target.reference = entryIds[index + offset];
+            });
+        }
+    };
+};
