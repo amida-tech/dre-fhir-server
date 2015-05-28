@@ -27,7 +27,7 @@ describe('models observation result', function () {
         start: moment()
     };
 
-    it('detect missing patient', shared.detectMissingPatient(model, samplesSet0[0]));
+    it('detect missing patient for create', shared.detectMissingPatientForCreate(model, samplesSet0[0]));
     it('detect missing patient for update', shared.detectMissingPatientForUpdate(model, samplesSet0[0]));
 
     _.range(2).forEach(function (i) {

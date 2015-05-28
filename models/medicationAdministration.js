@@ -20,7 +20,7 @@ var getMedicationPrescription = function (bbr, resource, callback) {
     if (!reference) {
         callback(errUtil.error('createMedPrescriptionMissing', 'No prescription specified'));
     } else {
-        //presriptionModel.read(bbr, reference, callback);
+        presriptionModel.read(bbr, reference, callback);
     }
 };
 

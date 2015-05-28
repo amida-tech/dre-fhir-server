@@ -52,13 +52,27 @@ methods.connectDatabase = function (dbName) {
     };
 };
 
-methods.detectMissingPatient = function (model, sample) {
+var checkError = function (err, expectedKey, stub, expectedMsg, done) {
+    try {
+        expect(err).to.exist;
+        expect(err.codeDetail).to.exist;
+        expect(err.codeDetail.key).to.equal(expectedKey);
+        if (expectedMsg) {
+            expect(err.message).to.equal(expectedMsg);
+        }
+        if (stub) {
+            stub.restore();
+        }
+        done();
+    } catch (e) {
+        done(e);
+    }
+};
+
+methods.detectMissingPatientForCreate = function (model, sample) {
     return function (done) {
         model.create(bbr, sample, function (err) {
-            expect(err).to.exist;
-            expect(err.codeDetail).to.exist;
-            expect(err.codeDetail.key).to.equal('createPatientMissing');
-            done();
+            checkError(err, 'createPatientMissing', null, null, done);
         });
     };
 };
@@ -70,12 +84,7 @@ methods.createDbError = function (model, sample, method) {
         });
 
         model.create(bbr, sample, function (err) {
-            expect(err).to.exist;
-            expect(err.codeDetail).to.exist;
-            expect(err.codeDetail.key).to.equal('internalDbError');
-            expect(err.message).to.equal(method);
-            stub.restore();
-            done();
+            checkError(err, 'internalDbError', stub, method, done);
         });
     };
 };
@@ -100,10 +109,7 @@ methods.createBadPatientId = function (model, sample, badId) {
         var sampleClone = _.cloneDeep(sample);
         sampleClone[self.patientRefKey].reference = badId;
         model.create(bbr, sampleClone, function (err) {
-            expect(err).to.exist;
-            expect(err.codeDetail).to.exist;
-            expect(err.codeDetail.key).to.equal('createPatientMissing');
-            done();
+            checkError(err, 'createPatientMissing', null, null, done);
         });
     };
 };

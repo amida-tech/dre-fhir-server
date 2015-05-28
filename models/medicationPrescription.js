@@ -15,7 +15,7 @@ module.exports = exports = modelsCommon({
 });
 
 exports.resourceToModelEntry = function (bbr, resource, callback) {
-    var bundle = bundleUtil.toBundle(resource);
+    var bundle = bundleUtil.toDocument([resource]);
     var model = bbFhir.toModel(bundle);
     var medication = model && _.get(model, 'data.medications[0]');
     if (medication) {
