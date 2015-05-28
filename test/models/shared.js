@@ -69,10 +69,10 @@ var checkError = function (err, expectedKey, stub, expectedMsg, done) {
     }
 };
 
-methods.detectMissingPatientForCreate = function (model, sample) {
+methods.detectCreateError = function (model, sample, key) {
     return function (done) {
         model.create(bbr, sample, function (err) {
-            checkError(err, 'createPatientMissing', null, null, done);
+            checkError(err, key, null, null, done);
         });
     };
 };
@@ -95,10 +95,7 @@ methods.createBadResource = function (model) {
             junk: 'junk'
         };
         model.create(bbr, junk, function (err) {
-            expect(err).to.exist;
-            expect(err.codeDetail).to.exist;
-            expect(err.codeDetail.key).to.equal('fhirToModel');
-            done();
+            checkError(err, 'fhirToModel', null, null, done);
         });
     };
 };

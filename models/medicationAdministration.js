@@ -16,8 +16,9 @@ module.exports = exports = modelsCommon({
 });
 
 var getMedicationPrescription = function (bbr, resource, callback) {
-    var reference = _.get(resource, 'prescription.reference');
-    if (!reference) {
+    console.log(resource);
+    var reference = _.get(resource, 'prescription.reference', null);
+    if (reference === null) {
         callback(errUtil.error('createMedPrescriptionMissing', 'No prescription specified'));
     } else {
         presriptionModel.read(bbr, reference, callback);
