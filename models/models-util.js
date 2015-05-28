@@ -104,7 +104,7 @@ var paramsTransform = function (bbr, patientRefKey, params, paramToBBRParamMap, 
     }
 };
 
-var searchWithSpec = function (bbr, searchSpec, patientRefKey, callback) {
+var searchWithSpec = function (bbr, searchSpec, referenceKeys, callback) {
     bbr.search(searchSpec, function (err, results, searchInfo) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
@@ -112,7 +112,7 @@ var searchWithSpec = function (bbr, searchSpec, patientRefKey, callback) {
             var bundleEntry = results.map(function (result) {
                 var resource = bbGenFhir.entryToResource(result._section, result.data);
                 resource.id = result._id;
-                resource[patientRefKey] = result._pt;
+                resource[referenceKeys.patientKey] = result._pt;
                 if (result._components && result._components.length) {
                     resource.related = result._components.map(function (component) {
                         return {
@@ -134,15 +134,15 @@ var searchWithSpec = function (bbr, searchSpec, patientRefKey, callback) {
 
 };
 
-exports.searchResourceWithPatient = function (bbr, params, sectionInfo, patientRefKey, paramToBBRParamMap, callback) {
+exports.searchResourceWithPatient = function (bbr, params, sectionInfo, referenceKeys, settings, callback) {
     if (params && params.searchId) {
         var searchSpec = {
             searchId: params.searchId.value,
             page: params.page.value
         };
-        searchWithSpec(bbr, searchSpec, patientRefKey, callback);
+        searchWithSpec(bbr, searchSpec, referenceKeys, callback);
     } else {
-        paramsTransform(bbr, patientRefKey, params, paramToBBRParamMap, function (err, bbrParams) {
+        paramsTransform(bbr, referenceKeys.patientKey, params, settings.paramToBBRParamMap, function (err, bbrParams) {
             if (err) {
                 callback(err);
             } else if (!bbrParams) {
@@ -152,9 +152,10 @@ exports.searchResourceWithPatient = function (bbr, params, sectionInfo, patientR
                 var searchSpec = {
                     section: sectionInfo,
                     query: bbrParams,
-                    patientInfo: true
+                    patientInfo: true,
+                    mustLink: settings.mustLink
                 };
-                searchWithSpec(bbr, searchSpec, patientRefKey, callback);
+                searchWithSpec(bbr, searchSpec, referenceKeys, callback);
             }
         });
     }

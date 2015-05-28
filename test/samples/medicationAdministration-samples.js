@@ -222,6 +222,60 @@ medicationAdministrations = [{
         "reference": "#med",
         "display": "ACE inhibitor or ARB + Lisinopril 10 MG Oral Tablet"
     }
+}, {
+    "resourceType": "MedicationAdministration",
+    "status": "completed",
+    "whenGiven": {
+        "end": "2012-08-06"
+    },
+    "dosage": [{
+        "route": {
+            "coding": [{
+                "system": "urn:oid:2.16.840.1.113883.3.26.1.1",
+                "code": "C38216",
+                "display": "RESPIRATORY (INHALATION)"
+            }],
+            "text": "RESPIRATORY (INHALATION)"
+        },
+        "quantity": {
+            "value": 0.09,
+            "units": "mg/actuat",
+            "code": "mg/actuat",
+            "system": "http://unitsofmeasure.org"
+        },
+        "timingPeriod": {
+            "end": "2012-08-06"
+        },
+        "asNeededCodeableConcept": {
+            "coding": [{
+                "system": "http://snomed.info/sct",
+                "code": "56018004",
+                "display": "Wheezing"
+            }],
+            "text": "Wheezing"
+        }
+    }],
+    "prescription": {
+        "reference": 5,
+        "display": "Albuterol 0.09 MG/ACTUAT inhalant solution"
+    },
+    "contained": [{
+        "id": "med",
+        "resourceType": "Medication",
+        "name": "Albuterol 0.09 MG/ACTUAT inhalant solution",
+        "code": {
+            "coding": [{
+                "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code": "573621",
+                "display": "Albuterol 0.09 MG/ACTUAT inhalant solution"
+            }],
+            "text": "Albuterol 0.09 MG/ACTUAT inhalant solution"
+        }
+    }],
+    "medication": {
+        "reference": "#med",
+        "display": "Albuterol 0.09 MG/ACTUAT inhalant solution"
+    }
 }];
 
 linkedMedicationPresciptions = [{
@@ -404,5 +458,61 @@ linkedMedicationPresciptions = [{
     "medication": {
         "reference": "#med",
         "display": "ACE inhibitor or ARB + Lisinopril 10 MG Oral Tablet"
+    }
+}, {
+    "resourceType": "MedicationPrescription",
+    "status": "active",
+    "dosageInstruction": [{
+        "route": {
+            "coding": [{
+                "system": "urn:oid:2.16.840.1.113883.3.26.1.1",
+                "code": "C38216",
+                "display": "RESPIRATORY (INHALATION)"
+            }],
+            "text": "RESPIRATORY (INHALATION)"
+        },
+        "doseQuantity": {
+            "value": 0.09,
+            "units": "mg/actuat",
+            "code": "mg/actuat",
+            "system": "http://unitsofmeasure.org"
+        },
+        "timingSchedule": {
+            "repeat": {
+                "frequency": 1,
+                "duration": 12,
+                "units": "h",
+                "end": "2012-08-06"
+            }
+        },
+        "asNeededCodeableConcept": {
+            "coding": [{
+                "system": "http://snomed.info/sct",
+                "code": "56018004",
+                "display": "Wheezing"
+            }],
+            "text": "Wheezing"
+        }
+    }],
+    "text": {
+        "status": "generated",
+        "div": "Albuterol 0.09 MG/ACTUAT inhalant solution"
+    },
+    "contained": [{
+        "id": "med",
+        "resourceType": "Medication",
+        "name": "Albuterol 0.09 MG/ACTUAT inhalant solution",
+        "code": {
+            "coding": [{
+                "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
+                "code": "573621",
+                "display": "Albuterol 0.09 MG/ACTUAT inhalant solution"
+            }],
+            "text": "Albuterol 0.09 MG/ACTUAT inhalant solution"
+        }
+    }],
+    "medication": {
+        "reference": "#med",
+        "display": "Albuterol 0.09 MG/ACTUAT inhalant solution"
     }
 }];

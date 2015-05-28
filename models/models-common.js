@@ -18,6 +18,17 @@ module.exports = function (options) {
     var result = Object.create(methods);
     result.sectionName = options.sectionName;
     result.patientRefKey = options.patientRefKey;
+    result.searchSettings = {
+        paramToBBRParamMap: {
+            '_id': '_id',
+            'patient': 'pat_key',
+            'subject': 'pat_key'
+        },
+        mustLink: options.mustLink
+    };
+    result.referenceKeys = {
+        patientKey: options.patientRefKey
+    };
     return result;
 };
 
@@ -78,14 +89,8 @@ methods.create = function (bbr, resource, callback) {
     this.createShared(bbr, resource, null, callback);
 };
 
-var paramToBBRParamMap = {
-    '_id': '_id',
-    'patient': 'pat_key',
-    'subject': 'pat_key'
-};
-
 methods.search = function (bbr, params, callback) {
-    modelsUtil.searchResourceWithPatient(bbr, params, this.sectionName, this.patientRefKey, paramToBBRParamMap, callback);
+    modelsUtil.searchResourceWithPatient(bbr, params, this.sectionName, this.referenceKeys, this.searchSettings, callback);
 };
 
 methods.read = function (bbr, id, callback) {

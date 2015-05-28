@@ -12,11 +12,11 @@ var errUtil = require('../lib/error-util');
 
 module.exports = exports = modelsCommon({
     sectionName: 'medications',
-    patientRefKey: 'patient'
+    patientRefKey: 'patient',
+    mustLink: 'true'
 });
 
 var getMedicationPrescription = function (bbr, resource, callback) {
-    console.log(resource);
     var reference = _.get(resource, 'prescription.reference', null);
     if (reference === null) {
         callback(errUtil.error('createMedPrescriptionMissing', 'No prescription specified'));
@@ -30,10 +30,11 @@ exports.resourceToModelEntry = function (bbr, resource, callback) {
         if (err) {
             callback(err);
         } else {
-            var bundle = bundleUtil.toBundle(resource);
+            var bundle = bundleUtil.toDocument([medicationPrescription, resource]);
             var model = bbFhir.toModel(bundle);
-            if (model && model.data && model.data.medications) {
-                var medication = model.data.medications[0];
+            var medication = model && _.get(model, 'data.medications[0]');
+            if (medication) {
+                medication._link = medicationPrescription.id;
                 callback(null, medication);
             } else {
                 var msg = util.format('%s resource cannot be parsed', resource.resourceType);

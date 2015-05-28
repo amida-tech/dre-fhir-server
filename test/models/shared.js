@@ -601,3 +601,15 @@ methods.populateRelated = function (sample, entryIds, offset) {
         }
     };
 };
+
+methods.updateReferences = function (samples, path, srcResources, offset) {
+    return function () {
+        samples.forEach(function (sample) {
+            var index = _.get(sample, path, null);
+            if (index !== null) {
+
+                _.set(sample, path, srcResources[index + offset].id);
+            }
+        });
+    };
+};
