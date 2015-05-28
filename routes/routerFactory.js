@@ -109,11 +109,11 @@ module.exports = (function () {
         },
         'update': function (model, resourceType) {
             return function (req, res) {
-                var patient = req.body;
+                var resource = req.body;
                 var c = req.app.get('connection');
                 var id = req.params.id;
 
-                model.update(c, patient, function (err, updateInfo) {
+                model.update(c, resource, function (err, updateInfo) {
                     if (err) {
                         handleError(res, err);
                     } else {
@@ -150,9 +150,9 @@ module.exports = (function () {
         },
         'create': function (model, resourceType) {
             return function (req, res) {
-                var patient = req.body;
+                var resource = req.body;
                 var c = req.app.get('connection');
-                model.create(c, patient, function (err, createInfo) {
+                model.create(c, resource, function (err, createInfo) {
                     if (err) {
                         handleError(res, err);
                     } else {
