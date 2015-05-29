@@ -6,6 +6,7 @@ var sinon = require('sinon');
 var moment = require('moment');
 var bbr = require('blue-button-record');
 var bbgen = require('blue-button-gen-fhir');
+var bbfhir = require('blue-button-fhir');
 
 var patientModel = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
@@ -96,6 +97,17 @@ methods.createBadResource = function (model) {
         };
         model.create(bbr, junk, function (err) {
             checkError(err, 'fhirToModel', null, null, done);
+        });
+    };
+};
+
+methods.createBBFhirError = function (model, sample) {
+    return function (done) {
+        var stub = sinon.stub(bbfhir, 'toModel', function () {
+            return null;
+        });
+        model.create(bbr, sample, function (err) {
+            checkError(err, 'fhirToModel', stub, null, done);
         });
     };
 };

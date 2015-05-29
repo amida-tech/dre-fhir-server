@@ -75,7 +75,7 @@ describe('models medicationAdministration', function () {
         shared.assignPatient(samplesSet1, patientSamples[1]);
     });
 
-    //it('create bad resource', shared.createBadResource(model));
+    it('create bad resource', shared.createBBFhirError(model, samplesSet0[0]));
     it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSource'));
     it('create db error simulation, saveSource', shared.createDbError(model, samplesSet0[0], 'saveSection'));
     it('create db error simulation, idToPatientKey', shared.createDbError(model, samplesSet0[0], 'idToPatientKey'));
