@@ -49,12 +49,16 @@ base.config = function (done) {
         .end(done);
 };
 
-base.createNegative = function (sample, done) {
+base.createNegativeStatus = function (sample, status, done) {
     var path = util.format('/fhir/%s', this.resourceType);
     this.api.post(path)
-        .expect(400)
+        .expect(status)
         .send(sample)
         .end(done);
+};
+
+base.createNegative = function (sample, done) {
+    this.createNegativeStatus(sample, 400, done);
 };
 
 base.create = function (sample, moments, done) {

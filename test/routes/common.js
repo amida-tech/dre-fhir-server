@@ -42,6 +42,17 @@ exports.putPatientRefs = function (resourceSets, patients, patientProperty) {
     });
 };
 
+exports.putPrescriptionRefs = function (resourceSets, prescriptionSets, prescriptionProperty) {
+    resourceSets.forEach(function (resources, setIndex) {
+        var prescriptions = prescriptionSets[setIndex];
+        resources.forEach(function (resource, index) {
+            var reference = prescriptions[index].id;
+            _.set(resource, prescriptionProperty, reference);
+
+        });
+    });
+};
+
 exports.putResourceRelatedRefs = function (resources, index) {
     var resource = resources[index];
     if (resource.related) {
