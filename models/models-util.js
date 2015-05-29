@@ -123,6 +123,9 @@ var searchWithSpec = function (bbr, searchSpec, referenceKeys, callback) {
                         };
                     });
                 }
+                if (result._link) {
+                    _.set(resource, referenceKeys.linkKey, result._link);
+                }
                 return {
                     resource: resource
                 };

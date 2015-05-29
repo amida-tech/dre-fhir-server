@@ -28,10 +28,6 @@ exports.linkedSet1 = function () {
 medicationAdministrations = [{
     "resourceType": "MedicationAdministration",
     "status": "completed",
-    "practitioner": {
-        "reference": "Practitioner/unknown",
-        "display": "Unknown"
-    },
     "whenGiven": {
         "start": "2012-08-06",
         "end": "2012-08-13"
@@ -60,7 +56,8 @@ medicationAdministrations = [{
                 "system": "http://snomed.info/sct",
                 "code": "56018004",
                 "display": "Wheezing"
-            }]
+            }],
+            "text": "Wheezing"
         }
     }],
     "prescription": {
@@ -80,7 +77,8 @@ medicationAdministrations = [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
                 "code": "573621",
                 "display": "Albuterol 0.09 MG/ACTUAT inhalant solution"
-            }]
+            }],
+            "text": "Albuterol 0.09 MG/ACTUAT inhalant solution"
         }
     }]
 }, {
@@ -109,7 +107,7 @@ medicationAdministrations = [{
     "contained": [{
         "id": "med",
         "resourceType": "Medication",
-        "name": "metoprolol tartrate Oral Tablet 25 mg",
+        "name": "Metoprolol Tartrate 25 MG Oral Tablet",
         "code": {
             "coding": [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
@@ -121,7 +119,7 @@ medicationAdministrations = [{
     }],
     "medication": {
         "reference": "#med",
-        "display": "metoprolol tartrate Oral Tablet 25 mg"
+        "display": "Metoprolol Tartrate 25 MG Oral Tablet"
     }
 }, {
     "resourceType": "MedicationAdministration",
@@ -146,7 +144,7 @@ medicationAdministrations = [{
     "contained": [{
         "id": "med",
         "resourceType": "Medication",
-        "name": "Proventil HFA Inhalation HFA Aerosol Inhaler 90 mcg/actuation",
+        "name": "200 ACTUAT Albuterol 0.09 MG/ACTUAT Metered Dose Inhaler",
         "code": {
             "coding": [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
@@ -158,7 +156,7 @@ medicationAdministrations = [{
     }],
     "medication": {
         "reference": "#med",
-        "display": "Proventil HFA Inhalation HFA Aerosol Inhaler 90 mcg/actuation"
+        "display": "200 ACTUAT Albuterol 0.09 MG/ACTUAT Metered Dose Inhaler"
     }
 }, {
     "resourceType": "MedicationAdministration",
@@ -177,7 +175,7 @@ medicationAdministrations = [{
     "contained": [{
         "id": "med",
         "resourceType": "Medication",
-        "name": "Antihypertensive combinations + Enalapril Maleate 10 MG / Hydrochlorothiazide 25 MG Oral Tablet",
+        "name": "Enalapril Maleate 10 MG / Hydrochlorothiazide 25 MG Oral Tablet",
         "code": {
             "coding": [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
@@ -189,7 +187,7 @@ medicationAdministrations = [{
     }],
     "medication": {
         "reference": "#med",
-        "display": "Antihypertensive combinations + Enalapril Maleate 10 MG / Hydrochlorothiazide 25 MG Oral Tablet"
+        "display": "Enalapril Maleate 10 MG / Hydrochlorothiazide 25 MG Oral Tablet"
     }
 }, {
     "resourceType": "MedicationAdministration",
@@ -208,7 +206,7 @@ medicationAdministrations = [{
     "contained": [{
         "id": "med",
         "resourceType": "Medication",
-        "name": "ACE inhibitor or ARB + Lisinopril 10 MG Oral Tablet",
+        "name": "Lisinopril 10 MG Oral Tablet",
         "code": {
             "coding": [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
@@ -220,7 +218,7 @@ medicationAdministrations = [{
     }],
     "medication": {
         "reference": "#med",
-        "display": "ACE inhibitor or ARB + Lisinopril 10 MG Oral Tablet"
+        "display": "Lisinopril 10 MG Oral Tablet"
     }
 }, {
     "resourceType": "MedicationAdministration",
@@ -313,7 +311,8 @@ linkedMedicationPresciptions = [{
                 "system": "http://snomed.info/sct",
                 "code": "56018004",
                 "display": "Wheezing"
-            }]
+            }],
+            "text": "Wheezing"
         }
     }],
     "text": {
@@ -329,7 +328,8 @@ linkedMedicationPresciptions = [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
                 "code": "573621",
                 "display": "Albuterol 0.09 MG/ACTUAT inhalant solution"
-            }]
+            }],
+            "text": "Albuterol 0.09 MG/ACTUAT inhalant solution"
         }
     }],
     "medication": {
@@ -359,7 +359,7 @@ linkedMedicationPresciptions = [{
     "contained": [{
         "id": "med",
         "resourceType": "Medication",
-        "name": "metoprolol tartrate Oral Tablet 25 mg",
+        "name": "Metoprolol Tartrate 25 MG Oral Tablet",
         "code": {
             "coding": [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
@@ -371,7 +371,7 @@ linkedMedicationPresciptions = [{
     }],
     "medication": {
         "reference": "#med",
-        "display": "metoprolol tartrate Oral Tablet 25 mg"
+        "display": "Metoprolol Tartrate 25 MG Oral Tablet"
     }
 }, {
     "resourceType": "MedicationPrescription",
@@ -393,7 +393,7 @@ linkedMedicationPresciptions = [{
     "contained": [{
         "id": "med",
         "resourceType": "Medication",
-        "name": "Proventil HFA Inhalation HFA Aerosol Inhaler 90 mcg/actuation",
+        "name": "200 ACTUAT Albuterol 0.09 MG/ACTUAT Metered Dose Inhaler",
         "code": {
             "coding": [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
@@ -405,7 +405,7 @@ linkedMedicationPresciptions = [{
     }],
     "medication": {
         "reference": "#med",
-        "display": "Proventil HFA Inhalation HFA Aerosol Inhaler 90 mcg/actuation"
+        "display": "200 ACTUAT Albuterol 0.09 MG/ACTUAT Metered Dose Inhaler"
     }
 }, {
     "resourceType": "MedicationPrescription",
@@ -419,7 +419,7 @@ linkedMedicationPresciptions = [{
     "contained": [{
         "id": "med",
         "resourceType": "Medication",
-        "name": "Antihypertensive combinations + Enalapril Maleate 10 MG / Hydrochlorothiazide 25 MG Oral Tablet",
+        "name": "Enalapril Maleate 10 MG / Hydrochlorothiazide 25 MG Oral Tablet",
         "code": {
             "coding": [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
@@ -431,7 +431,7 @@ linkedMedicationPresciptions = [{
     }],
     "medication": {
         "reference": "#med",
-        "display": "Antihypertensive combinations + Enalapril Maleate 10 MG / Hydrochlorothiazide 25 MG Oral Tablet"
+        "display": "Enalapril Maleate 10 MG / Hydrochlorothiazide 25 MG Oral Tablet"
     }
 }, {
     "resourceType": "MedicationPrescription",
@@ -445,7 +445,7 @@ linkedMedicationPresciptions = [{
     "contained": [{
         "id": "med",
         "resourceType": "Medication",
-        "name": "ACE inhibitor or ARB + Lisinopril 10 MG Oral Tablet",
+        "name": "Lisinopril 10 MG Oral Tablet",
         "code": {
             "coding": [{
                 "system": "http://www.nlm.nih.gov/research/umls/rxnorm",
@@ -457,7 +457,7 @@ linkedMedicationPresciptions = [{
     }],
     "medication": {
         "reference": "#med",
-        "display": "ACE inhibitor or ARB + Lisinopril 10 MG Oral Tablet"
+        "display": "Lisinopril 10 MG Oral Tablet"
     }
 }, {
     "resourceType": "MedicationPrescription",

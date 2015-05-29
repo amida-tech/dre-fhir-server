@@ -15,7 +15,7 @@ var _ = require('lodash');
 
 var expect = chai.expect;
 
-xdescribe('models medicationAdministration', function () {
+describe('models medicationAdministration', function () {
     var shared = require('./shared')({
         patientRefKey: 'patient'
     });
@@ -116,8 +116,8 @@ xdescribe('models medicationAdministration', function () {
     it('search by patient-0', shared.searchByPatient(model, patientSamples[0], entryMapById, samplesSet0.length));
     it('search by patient-1', shared.searchByPatient(model, patientSamples[1], entryMapById, samplesSet1.length));
 
-    it('search prescriptions by patient-0', shared.searchByPatient(model, patientSamples[0], linkedEntryMapById, linkedSet0.length));
-    it('search prescriptions by patient-1', shared.searchByPatient(model, patientSamples[1], linkedEntryMapById, linkedSet1.length));
+    it('search prescriptions by patient-0', shared.searchByPatient(modelPrescription, patientSamples[0], linkedEntryMapById, linkedSet0.length));
+    it('search prescriptions by patient-1', shared.searchByPatient(modelPrescription, patientSamples[1], linkedEntryMapById, linkedSet1.length));
 
     it('read invalid id', shared.readMissing(model, 'abc'));
     it('read valid id missing', shared.readMissing(model, '123456789012345678901234'));
@@ -133,17 +133,17 @@ xdescribe('models medicationAdministration', function () {
         it('read for patient-1 ' + i, shared.read(model, samplesSet1[i], moments, '1'));
     });
 
-    it('update bad resource', shared.updateBadResource(model, samplesSet0[0]));
+    //it('update bad resource', shared.updateBadResource(model, samplesSet0[0]));
     it('update invalid id', shared.updateInvalidId(model, samplesSet0[0], 'abc'));
     it('update db error simulation, idToPatientKey', shared.updateDbError(model, samplesSet0[0], 'idToPatientKey'));
     it('udpate db error simulation, saveSource', shared.updateDbError(model, samplesSet0[0], 'saveSource'));
     it('udpate db error simulation, replaceEntry', shared.updateDbError(model, samplesSet0[0], 'replaceEntry'));
 
     it('update values', function () {
-        samplesSet0[0].dateWritten = '2012-08-05';
-        samplesSet0[0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-05';
-        samplesSet1[0].dateWritten = '2012-08-04';
-        samplesSet1[0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-04';
+        samplesSet0[0].whenGiven.start = '2012-07-06';
+        samplesSet1[0].whenGiven.end = '2012-07-13';
+        samplesSet0[0].dosage[0].timingPeriod.start = '2012-07-06';
+        samplesSet1[0].dosage[0].timingPeriod.end = '2012-07-13';
     });
 
     it('detect updated not equal db for patient-0', shared.readNegative(model, samplesSet0[0]));
@@ -179,7 +179,7 @@ xdescribe('models medicationAdministration', function () {
     after(shared.clearDatabase);
 });
 
-xdescribe('models medication administration search by page', function () {
+describe('models medication administration search by page', function () {
     var shared = require('./shared')({
         patientRefKey: 'patient',
         pageSize: 5
@@ -195,7 +195,14 @@ xdescribe('models medication administration search by page', function () {
     var samplesSet1 = _.flatten(_.times(4, function () {
         return _.cloneDeep(samplesSet1Base);
     }));
-
+    var linkedSet0Base = samples.linkedSet0();
+    var linkedSet0 = _.flatten(_.times(4, function () {
+        return _.cloneDeep(linkedSet0Base);
+    }));
+    var linkedSet1Base = samples.linkedSet1();
+    var linkedSet1 = _.flatten(_.times(4, function () {
+        return _.cloneDeep(linkedSet1Base);
+    }));
     var moments = {
         start: moment()
     };
@@ -203,6 +210,28 @@ xdescribe('models medication administration search by page', function () {
     _.range(2).forEach(function (i) {
         it('create patient ' + i, shared.create(patientModel, patientSamples[i], [], {}, moments));
     }, this);
+
+    it('assign patient-0 to prescription set-0', function () {
+        shared.assignPatient(linkedSet0, patientSamples[0]);
+    });
+
+    it('assign patient-1 to prescription set-1', function () {
+        shared.assignPatient(linkedSet1, patientSamples[1]);
+    });
+
+    var linkedEntryMapById = {};
+
+    _.range(linkedSet0.length).forEach(function (i) {
+        it('create prescriptions for patient-0 ' + i, shared.create(modelPrescription, linkedSet0[i], [], linkedEntryMapById, moments));
+    });
+
+    _.range(linkedSet1.length).forEach(function (i) {
+        it('create prescriptions for patient-1 ' + i, shared.create(modelPrescription, linkedSet1[i], [], linkedEntryMapById, moments));
+    });
+
+    it('assign prescriptions to set-0', shared.updateReferences(samplesSet0, 'prescription.reference', linkedSet0, 0));
+
+    it('assign prescriptions to set-1', shared.updateReferences(samplesSet1, 'prescription.reference', linkedSet1, -3));
 
     it('assign patient-0 to sample set-0', function () {
         shared.assignPatient(samplesSet0, patientSamples[0]);
@@ -215,11 +244,11 @@ xdescribe('models medication administration search by page', function () {
     var entryMapById = {};
     var entryIds = [];
 
-    _.range(0, samplesSet0.length).forEach(function (i) {
+    _.range(samplesSet0.length).forEach(function (i) {
         it('create for patient-0 ' + i, shared.create(model, samplesSet0[i], entryIds, entryMapById, moments));
     });
 
-    _.range(0, samplesSet1.length).forEach(function (i) {
+    _.range(samplesSet1.length).forEach(function (i) {
         it('create for patient-1 ' + i, shared.create(model, samplesSet1[i], entryIds, entryMapById, moments));
     });
 

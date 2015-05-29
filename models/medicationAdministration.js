@@ -15,6 +15,7 @@ module.exports = exports = modelsCommon({
     patientRefKey: 'patient',
     mustLink: 'true'
 });
+exports.referenceKeys.linkKey = 'prescription.reference';
 
 var getMedicationPrescription = function (bbr, resource, callback) {
     var reference = _.get(resource, 'prescription.reference', null);

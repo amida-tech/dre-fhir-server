@@ -117,6 +117,9 @@ methods.read = function (bbr, id, callback) {
                             reference: patientInfo.reference,
                             display: patientInfo.display
                         };
+                        if (result._link) {
+                            _.set(resource, 'prescription.reference', result._link.toString());
+                        }
                         var metaAttr = result.metadata.attribution;
                         var versionId = metaAttr.length;
                         var lastUpdated;
