@@ -6,6 +6,7 @@ var sinon = require('sinon');
 var moment = require('moment');
 var bbr = require('blue-button-record');
 var bbgen = require('blue-button-gen-fhir');
+var bbfhir = require('blue-button-fhir');
 
 var patientModel = require('../../models/patient');
 var patientSamples = require('../samples/patient-samples')();
@@ -52,13 +53,27 @@ methods.connectDatabase = function (dbName) {
     };
 };
 
-methods.detectMissingPatient = function (model, sample) {
+var checkError = function (err, expectedKey, stub, expectedMsg, done) {
+    try {
+        expect(err).to.exist;
+        expect(err.codeDetail).to.exist;
+        expect(err.codeDetail.key).to.equal(expectedKey);
+        if (expectedMsg) {
+            expect(err.message).to.equal(expectedMsg);
+        }
+        if (stub) {
+            stub.restore();
+        }
+        done();
+    } catch (e) {
+        done(e);
+    }
+};
+
+methods.detectCreateError = function (model, sample, key) {
     return function (done) {
         model.create(bbr, sample, function (err) {
-            expect(err).to.exist;
-            expect(err.codeDetail).to.exist;
-            expect(err.codeDetail.key).to.equal('createPatientMissing');
-            done();
+            checkError(err, key, null, null, done);
         });
     };
 };
@@ -70,12 +85,7 @@ methods.createDbError = function (model, sample, method) {
         });
 
         model.create(bbr, sample, function (err) {
-            expect(err).to.exist;
-            expect(err.codeDetail).to.exist;
-            expect(err.codeDetail.key).to.equal('internalDbError');
-            expect(err.message).to.equal(method);
-            stub.restore();
-            done();
+            checkError(err, 'internalDbError', stub, method, done);
         });
     };
 };
@@ -86,10 +96,18 @@ methods.createBadResource = function (model) {
             junk: 'junk'
         };
         model.create(bbr, junk, function (err) {
-            expect(err).to.exist;
-            expect(err.codeDetail).to.exist;
-            expect(err.codeDetail.key).to.equal('fhirToModel');
-            done();
+            checkError(err, 'fhirToModel', null, null, done);
+        });
+    };
+};
+
+methods.createBBFhirError = function (model, sample) {
+    return function (done) {
+        var stub = sinon.stub(bbfhir, 'toModel', function () {
+            return null;
+        });
+        model.create(bbr, sample, function (err) {
+            checkError(err, 'fhirToModel', stub, null, done);
         });
     };
 };
@@ -100,10 +118,7 @@ methods.createBadPatientId = function (model, sample, badId) {
         var sampleClone = _.cloneDeep(sample);
         sampleClone[self.patientRefKey].reference = badId;
         model.create(bbr, sampleClone, function (err) {
-            expect(err).to.exist;
-            expect(err.codeDetail).to.exist;
-            expect(err.codeDetail.key).to.equal('createPatientMissing');
-            done();
+            checkError(err, 'createPatientMissing', null, null, done);
         });
     };
 };
@@ -586,4 +601,26 @@ methods.clearDatabase = function (done) {
             });
         }
     });
+};
+
+methods.populateRelated = function (sample, entryIds, offset) {
+    return function () {
+        if (sample.related) {
+            sample.related.forEach(function (related) {
+                var index = related.target.reference;
+                related.target.reference = entryIds[index + offset];
+            });
+        }
+    };
+};
+
+methods.updateReferences = function (samples, path, srcResources, offset) {
+    return function () {
+        samples.forEach(function (sample) {
+            var index = _.get(sample, path, null);
+            if (index !== null) {
+                _.set(sample, path, srcResources[index + offset].id);
+            }
+        });
+    };
 };

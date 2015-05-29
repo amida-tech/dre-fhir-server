@@ -33,21 +33,23 @@ var findPatientKey = function findPatientKey(bbr, candidate, index, callback) {
 };
 
 exports.createShared = function (bbr, resource, id, callback) {
-    var demographics = exports.resourceToModelEntry(resource, callback);
-    if (!demographics) {
-        return;
-    }
-    var name = demographics.name;
-    var ptKeyCandidate = name.first.charAt(0).toLowerCase() + name.last.toLowerCase();
-
-    findPatientKey(bbr, ptKeyCandidate, 0, function (err, ptKey) {
+    exports.resourceToModelEntry(bbr, resource, function (err, demographics) {
         if (err) {
             callback(err);
         } else {
-            if (id) {
-                demographics._id = id;
-            }
-            exports.saveNewResource(bbr, ptKey, resource, demographics, callback);
+            var name = demographics.name;
+            var ptKeyCandidate = name.first.charAt(0).toLowerCase() + name.last.toLowerCase();
+
+            findPatientKey(bbr, ptKeyCandidate, 0, function (err, ptKey) {
+                if (err) {
+                    callback(err);
+                } else {
+                    if (id) {
+                        demographics._id = id;
+                    }
+                    exports.saveNewResource(bbr, ptKey, resource, demographics, callback);
+                }
+            });
         }
     });
 };

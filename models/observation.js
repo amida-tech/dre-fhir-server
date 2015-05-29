@@ -64,7 +64,11 @@ var paramToBBRParamMap = {
 };
 
 exports.search = function (bbr, params, callback) {
-    modelsUtil.searchResourceWithPatient(bbr, params, ['vitals', 'results'], 'subject', paramToBBRParamMap, callback);
+    var settings = libraryVitals.searchSettings;
+    var referenceKeys = {
+        patientKey: 'subject'
+    };
+    modelsUtil.searchResourceWithPatient(bbr, params, ['vitals', 'results'], referenceKeys, settings, callback);
 };
 
 exports.read = function (bbr, id, callback) {

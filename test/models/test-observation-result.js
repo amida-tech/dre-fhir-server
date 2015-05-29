@@ -27,7 +27,7 @@ describe('models observation result', function () {
         start: moment()
     };
 
-    it('detect missing patient', shared.detectMissingPatient(model, samplesSet0[0]));
+    it('detect missing patient for create', shared.detectCreateError(model, samplesSet0[0], 'createPatientMissing'));
     it('detect missing patient for update', shared.detectMissingPatientForUpdate(model, samplesSet0[0]));
 
     _.range(2).forEach(function (i) {
@@ -52,35 +52,17 @@ describe('models observation result', function () {
     var entryMapById = {};
     var entryIds = [];
 
-    var populatePanelIt = function (samplesSet, index, offset) {
-        return function () {
-            var obsSample = samplesSet[index];
-            obsSample.related.forEach(function (related) {
-                var index = related.target.reference;
-                related.target.reference = entryIds[index + offset];
-            });
-        };
-    };
-
     it('create for patient-0 using update 0', shared.updateToCreate(model, samplesSet0[0], entryIds, entryMapById, moments));
 
-    _.range(1, samples.panelStart0).forEach(function (i) {
-        it('create for patient-0 ' + i, shared.create(model, samplesSet0[i], entryIds, entryMapById, moments));
-    });
-
-    _.range(samples.panelStart0, samplesSet0.length).forEach(function (i) {
-        it('populate panel for patient-0 ' + i, populatePanelIt(samplesSet0, i, 0));
+    _.range(1, samplesSet0.length).forEach(function (i) {
+        it('populate panel for patient-0 ' + i, shared.populateRelated(samplesSet0[i], entryIds, 0));
         it('create panel for patient-0 ' + i, shared.create(model, samplesSet0[i], entryIds, entryMapById, moments));
     });
 
     it('create for patient-1 using update 0', shared.updateToCreate(model, samplesSet1[0], entryIds, entryMapById, moments));
 
-    _.range(1, samples.panelStart1).forEach(function (i) {
-        it('create for patient-1 ' + i, shared.create(model, samplesSet1[i], entryIds, entryMapById, moments));
-    });
-
-    _.range(samples.panelStart1, samplesSet1.length).forEach(function (i) {
-        it('populate panel for patient-1 ' + i, populatePanelIt(samplesSet1, i, 0));
+    _.range(1, samplesSet1.length).forEach(function (i) {
+        it('populate panel for patient-1 ' + i, shared.populateRelated(samplesSet1[i], entryIds, 0));
         it('create panel for patient-1 ' + i, shared.create(model, samplesSet1[i], entryIds, entryMapById, moments));
     });
 
