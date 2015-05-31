@@ -133,17 +133,13 @@ describe(testTitle, function () {
     it('update missing (invalid id)', fn(r, r.updateInvalidId, [resourceSets[0][0], 'abc']));
 
     it('update local resource 0 for patient 0', function () {
-        resourceSets[0][0].whenGiven.start = '2012-07-06';
-        resourceSets[0][0].whenGiven.end = '2012-07-13';
-        resourceSets[0][0].dosage[0].timingPeriod.start = '2012-07-06';
-        resourceSets[0][0].dosage[0].timingPeriod.end = '2012-07-13';
+        resourceSets[0][0].effectiveTimePeriod.start = '2012-07-06';
+        resourceSets[0][0].effectiveTimePeriod.end = '2012-07-13';
     });
 
     it('update local resource 0 for patient 1', function () {
-        resourceSets[1][0].whenGiven.start = '2012-07-06';
-        resourceSets[1][0].whenGiven.end = '2012-07-13';
-        resourceSets[1][0].dosage[0].timingPeriod.start = '2012-07-06';
-        resourceSets[1][0].dosage[0].timingPeriod.end = '2012-07-13';
+        resourceSets[1][0].effectiveTimePeriod.start = '2012-07-06';
+        resourceSets[1][0].effectiveTimePeriod.end = '2012-07-13';
     });
 
     _.range(2).forEach(function (i) {

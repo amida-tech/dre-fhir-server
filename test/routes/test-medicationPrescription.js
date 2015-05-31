@@ -101,12 +101,12 @@ describe(testTitle, function () {
 
     it('update local resource 0 for patient 0', function () {
         resourceSets[0][0].dateWritten = '2012-08-05';
-        resourceSets[0][0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-05';
+        resourceSets[0][0].dosageInstruction[0].scheduledTiming.event[0].start = '2012-08-05';
     });
 
     it('update local resource 0 for patient 1', function () {
         resourceSets[1][0].dateWritten = '2012-08-05';
-        resourceSets[1][0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-05';
+        resourceSets[1][0].dosageInstruction[0].scheduledTiming.event[0].start = '2012-08-05';
     });
 
     _.range(2).forEach(function (i) {

@@ -140,10 +140,8 @@ describe('models medicationAdministration', function () {
     it('udpate db error simulation, replaceEntry', shared.updateDbError(model, samplesSet0[0], 'replaceEntry'));
 
     it('update values', function () {
-        samplesSet0[0].whenGiven.start = '2012-07-06';
-        samplesSet1[0].whenGiven.end = '2012-07-13';
-        samplesSet0[0].dosage[0].timingPeriod.start = '2012-07-06';
-        samplesSet1[0].dosage[0].timingPeriod.end = '2012-07-13';
+        samplesSet0[0].effectiveTimePeriod.start = '2012-07-06';
+        samplesSet1[0].effectiveTimePeriod.end = '2012-07-13';
     });
 
     it('detect updated not equal db for patient-0', shared.readNegative(model, samplesSet0[0]));
