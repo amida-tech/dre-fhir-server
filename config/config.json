@@ -77,7 +77,7 @@
 					"name": "_id",
 					"type": "string"
 				}, {
-					"name": "subject",
+					"name": "patient",
 					"type": "reference"
 				}]
 			}, {
