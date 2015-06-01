@@ -28,11 +28,11 @@ exports.linkedSet1 = function () {
 medicationAdministrations = [{
     "resourceType": "MedicationAdministration",
     "status": "completed",
-    "whenGiven": {
+    "effectiveTimePeriod": {
         "start": "2012-08-06",
         "end": "2012-08-13"
     },
-    "dosage": [{
+    "dosage": {
         "route": {
             "coding": [{
                 "code": "C38216",
@@ -46,20 +46,8 @@ medicationAdministrations = [{
             "units": "mg/actuat",
             "code": "mg/actuat",
             "system": "http://unitsofmeasure.org"
-        },
-        "timingPeriod": {
-            "start": "2012-08-06",
-            "end": "2012-08-13"
-        },
-        "asNeededCodeableConcept": {
-            "coding": [{
-                "system": "http://snomed.info/sct",
-                "code": "56018004",
-                "display": "Wheezing"
-            }],
-            "text": "Wheezing"
         }
-    }],
+    },
     "prescription": {
         "reference": 0,
         "display": "Albuterol 0.09 MG/ACTUAT inhalant solution"
@@ -84,22 +72,18 @@ medicationAdministrations = [{
 }, {
     "resourceType": "MedicationAdministration",
     "status": "completed",
-    "whenGiven": {
+    "effectiveTimePeriod": {
         "start": "2013-01-01",
         "end": "2013-01-31"
     },
-    "dosage": [{
+    "dosage": {
         "quantity": {
             "value": 1,
             "units": "tablet",
             "code": "tablet",
             "system": "http://unitsofmeasure.org"
-        },
-        "timingPeriod": {
-            "start": "2013-01-01",
-            "end": "2013-01-31"
         }
-    }],
+    },
     "prescription": {
         "reference": 1,
         "display": "take 1 tablet (25 mg) by oral route once daily for 30 days"
@@ -124,19 +108,15 @@ medicationAdministrations = [{
 }, {
     "resourceType": "MedicationAdministration",
     "status": "completed",
-    "whenGiven": {
+    "effectiveTimePeriod": {
         "start": "2013-01-01",
         "end": "2013-01-31"
     },
-    "dosage": [{
+    "dosage": {
         "quantity": {
             "value": 2
         },
-        "timingPeriod": {
-            "start": "2013-01-01",
-            "end": "2013-01-31"
-        }
-    }],
+    },
     "prescription": {
         "reference": 2,
         "display": "inhale 2 puffs by inhalation route every 4 hours as needed for 30 days"
@@ -161,14 +141,9 @@ medicationAdministrations = [{
 }, {
     "resourceType": "MedicationAdministration",
     "status": "completed",
-    "whenGiven": {
+    "effectiveTimePeriod": {
         "start": "2010-06-05"
     },
-    "dosage": [{
-        "timingPeriod": {
-            "start": "2010-06-05"
-        }
-    }],
     "prescription": {
         "reference": 3
     },
@@ -192,14 +167,9 @@ medicationAdministrations = [{
 }, {
     "resourceType": "MedicationAdministration",
     "status": "completed",
-    "whenGiven": {
+    "effectiveTimePeriod": {
         "start": "2010-07-31"
     },
-    "dosage": [{
-        "timingPeriod": {
-            "start": "2010-07-31"
-        }
-    }],
     "prescription": {
         "reference": 4
     },
@@ -223,10 +193,10 @@ medicationAdministrations = [{
 }, {
     "resourceType": "MedicationAdministration",
     "status": "completed",
-    "whenGiven": {
+    "effectiveTimePeriod": {
         "end": "2012-08-06"
     },
-    "dosage": [{
+    "dosage": {
         "route": {
             "coding": [{
                 "system": "urn:oid:2.16.840.1.113883.3.26.1.1",
@@ -240,19 +210,8 @@ medicationAdministrations = [{
             "units": "mg/actuat",
             "code": "mg/actuat",
             "system": "http://unitsofmeasure.org"
-        },
-        "timingPeriod": {
-            "end": "2012-08-06"
-        },
-        "asNeededCodeableConcept": {
-            "coding": [{
-                "system": "http://snomed.info/sct",
-                "code": "56018004",
-                "display": "Wheezing"
-            }],
-            "text": "Wheezing"
         }
-    }],
+    },
     "prescription": {
         "reference": 5,
         "display": "Albuterol 0.09 MG/ACTUAT inhalant solution"
@@ -295,15 +254,17 @@ linkedMedicationPresciptions = [{
             "code": "mg/actuat",
             "system": "http://unitsofmeasure.org"
         },
-        "timingSchedule": {
+        "scheduledTiming": {
             "event": [{
                 "start": "2012-08-06"
             }],
             "repeat": {
                 "frequency": 1,
                 "duration": 12,
-                "units": "h",
-                "end": "2012-08-13"
+                "durationUnits": "h",
+                "bounds": {
+                    "end": "2012-08-13"
+                }
             }
         },
         "asNeededCodeableConcept": {
@@ -347,7 +308,7 @@ linkedMedicationPresciptions = [{
             "code": "tablet",
             "system": "http://unitsofmeasure.org"
         },
-        "timingPeriod": {
+        "scheduledPeriod": {
             "start": "2013-01-01",
             "end": "2013-01-31"
         }
@@ -381,7 +342,7 @@ linkedMedicationPresciptions = [{
         "doseQuantity": {
             "value": 2
         },
-        "timingPeriod": {
+        "scheduledPeriod": {
             "start": "2013-01-01",
             "end": "2013-01-31"
         }
@@ -412,7 +373,7 @@ linkedMedicationPresciptions = [{
     "status": "active",
     "dateWritten": "2010-06-05",
     "dosageInstruction": [{
-        "timingPeriod": {
+        "scheduledPeriod": {
             "start": "2010-06-05"
         }
     }],
@@ -438,7 +399,7 @@ linkedMedicationPresciptions = [{
     "status": "active",
     "dateWritten": "2010-07-31",
     "dosageInstruction": [{
-        "timingPeriod": {
+        "scheduledPeriod": {
             "start": "2010-07-31"
         }
     }],
@@ -477,12 +438,14 @@ linkedMedicationPresciptions = [{
             "code": "mg/actuat",
             "system": "http://unitsofmeasure.org"
         },
-        "timingSchedule": {
+        "scheduledTiming": {
             "repeat": {
                 "frequency": 1,
                 "duration": 12,
-                "units": "h",
-                "end": "2012-08-06"
+                "durationUnits": "h",
+                "bounds": {
+                    "end": "2012-08-06"
+                }
             }
         },
         "asNeededCodeableConcept": {

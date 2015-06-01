@@ -105,9 +105,9 @@ describe('models medicationPrescription', function () {
 
     it('update values', function () {
         samplesSet0[0].dateWritten = '2012-08-05';
-        samplesSet0[0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-05';
+        samplesSet0[0].dosageInstruction[0].scheduledTiming.event[0].start = '2012-08-05';
         samplesSet1[0].dateWritten = '2012-08-04';
-        samplesSet1[0].dosageInstruction[0].timingSchedule.event[0].start = '2012-08-04';
+        samplesSet1[0].dosageInstruction[0].scheduledTiming.event[0].start = '2012-08-04';
     });
 
     it('detect updated not equal db for patient-0', shared.readNegative(model, samplesSet0[0]));

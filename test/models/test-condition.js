@@ -16,7 +16,7 @@ var expect = chai.expect;
 
 describe('models condition', function () {
     var shared = require('./shared')({
-        patientRefKey: 'subject'
+        patientRefKey: 'patient'
     });
 
     before('connectDatabase', shared.connectDatabase('fhirconditionmodel'));
@@ -145,7 +145,7 @@ describe('models condition', function () {
 
 describe('models condition search by page', function () {
     var shared = require('./shared')({
-        patientRefKey: 'subject',
+        patientRefKey: 'patient',
         pageSize: 5
     });
 

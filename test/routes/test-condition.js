@@ -18,7 +18,7 @@ var fnPt = common.searchByPatient;
 
 var resourceType = 'Condition';
 var testTitle = util.format('%s routes', resourceType);
-var patientProperty = 'subject';
+var patientProperty = 'patient';
 
 describe(testTitle, function () {
     var dbName = util.format('fhir%sapi', resourceType.toLowerCase());
