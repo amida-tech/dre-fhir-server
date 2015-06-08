@@ -73,6 +73,14 @@ var searchWithSpec = function (bbr, searchSpec, callback) {
                 var bundle = bbGenFhir.demographicsToFHIR(result.data);
                 var resource = bundle.entry[0];
                 resource.resource.id = result._id;
+
+                var metaAttr = result.metadata.attribution;
+                var versionId = metaAttr.length;
+                var lastUpdated = metaAttr[versionId - 1].merged.toISOString();
+                resource.resource.meta = {
+                    lastUpdated: lastUpdated,
+                    versionId: versionId.toString()
+                };
                 return resource;
             });
             var bundle = bundleUtil.toSearchSet(bundleEntry, searchInfo);

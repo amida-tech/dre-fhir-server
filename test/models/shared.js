@@ -170,6 +170,10 @@ methods.search = function (model, params, map, count) {
                     if (patientRefKey) {
                         delete dbResource[patientRefKey].display;
                     }
+                    var meta = dbResource.meta;
+                    expect(meta).to.exist;
+                    expect(meta.versionId).to.exist;
+                    expect(meta.lastUpdated).to.exist;
                     delete dbResource.meta;
                     expect(dbResource).to.deep.equal(map[dbResource.id]);
                 }
