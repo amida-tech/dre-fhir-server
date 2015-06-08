@@ -14,7 +14,7 @@ var _ = require('lodash');
 
 var expect = chai.expect;
 
-xdescribe('models medicationStatement', function () {
+describe('models medicationStatement', function () {
     var shared = require('./shared')({
         patientRefKey: 'patient'
     });
@@ -104,10 +104,12 @@ xdescribe('models medicationStatement', function () {
     it('udpate db error simulation, replaceEntry', shared.updateDbError(model, samplesSet0[0], 'replaceEntry'));
 
     it('update values', function () {
-        samplesSet0[0].onsetDateTime = '2002-01-01';
-        samplesSet0[0].dateAsserted = '2002-01-01';
-        samplesSet1[0].onsetDateTime = '2003-05-05';
-        samplesSet1[0].dateAsserted = '2003-05-05';
+        samplesSet0[0].effectivePeriod = {
+            start: '2015-01-01'
+        };
+        samplesSet1[0].effectivePeriod = {
+            start: '2015-02-01'
+        };
     });
 
     it('detect updated not equal db for patient-0', shared.readNegative(model, samplesSet0[0]));
@@ -143,7 +145,7 @@ xdescribe('models medicationStatement', function () {
     after(shared.clearDatabase);
 });
 
-xdescribe('models medicationStatement search by page', function () {
+describe('models medicationStatement search by page', function () {
     var shared = require('./shared')({
         patientRefKey: 'patient',
         pageSize: 5

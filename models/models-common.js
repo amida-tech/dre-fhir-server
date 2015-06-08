@@ -44,8 +44,8 @@ methods.resourceToModelEntry = function (bbr, resource, callback) {
 };
 
 methods.modelEntryToResource = function (result, id, patientInfo, removed) {
-    var sectionName = result._section || this.sectionName;
-    var resource = bbGenFhir.entryToResource(sectionName, result.data);
+    var sectionKey = this.overrideSectionKey || result._section || this.sectionName;
+    var resource = bbGenFhir.entryToResource(sectionKey, result.data);
     if (!resource) {
         return null;
     } else {
