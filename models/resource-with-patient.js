@@ -41,27 +41,13 @@ methods.paramsTransform = function (bbr, patientRefKey, params, paramToBBRParamM
 };
 
 methods.searchWithSpec = function (bbr, searchSpec, referenceKeys, callback) {
+    var self = this;
     bbr.search(searchSpec, function (err, results, searchInfo) {
         if (err) {
             callback(errUtil.error('internalDbError', err.message));
         } else {
             var bundleEntry = results.map(function (result) {
-                var resource = bbGenFhir.entryToResource(result._section, result.data);
-                resource.id = result._id;
-                resource[referenceKeys.patientKey] = result._pt;
-                if (result._components && result._components.length) {
-                    resource.related = result._components.map(function (component) {
-                        return {
-                            target: {
-                                reference: component
-                            },
-                            type: "has-component"
-                        };
-                    });
-                }
-                if (result._link) {
-                    _.set(resource, referenceKeys.linkKey, result._link);
-                }
+                var resource = self.modelEntryToResource(result, result._id, result._pt, false);
                 return {
                     resource: resource
                 };

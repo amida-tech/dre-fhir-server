@@ -43,8 +43,48 @@ methods.resourceToModelEntry = function (bbr, resource, callback) {
     }
 };
 
-methods.modelEntryToResource = function (bbr, resource, callback) {
-
+methods.modelEntryToResource = function (result, id, patientInfo, removed) {
+    var sectionName = result._section || this.sectionName;
+    var resource = bbGenFhir.entryToResource(sectionName, result.data);
+    if (!resource) {
+        return null;
+    } else {
+        resource.id = id;
+        resource[this.patientRefKey] = {
+            reference: patientInfo.reference,
+            display: patientInfo.display
+        };
+        if (result._link) {
+            _.set(resource, this.referenceKeys.linkKey, result._link.toString());
+        }
+        var metaAttr = result.metadata.attribution;
+        var versionId = metaAttr.length;
+        var lastUpdated;
+        if (removed) {
+            ++versionId;
+            lastUpdated = result.archived_on.toISOString();
+        } else {
+            var merged = metaAttr[versionId - 1].merged;
+            if (merged) {
+                lastUpdated = merged.toISOString();
+            }
+        }
+        resource.meta = {
+            lastUpdated: lastUpdated,
+            versionId: versionId.toString()
+        };
+        if (result._components && result._components.length) {
+            resource.related = result._components.map(function (component) {
+                return {
+                    target: {
+                        reference: component.toString()
+                    },
+                    type: "has-component"
+                };
+            });
+        }
+        return resource;
+    }
 };
 
 methods.saveNewResource = function (bbr, ptKey, resource, section, callback) {
@@ -109,42 +149,11 @@ methods.read = function (bbr, id, callback) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
-                    var resource = bbGenFhir.entryToResource(sectionName, result.data);
+                    var resource = self.modelEntryToResource(result, id, patientInfo, removed);
                     if (!resource) {
                         var msg = util.format('Entry for %s cannot be converted to a resource', sectionName);
                         callback(errUtil.error('internalDbError', msg));
                     } else {
-                        resource.id = id;
-                        resource[patientRefKey] = {
-                            reference: patientInfo.reference,
-                            display: patientInfo.display
-                        };
-                        if (result._link) {
-                            _.set(resource, 'prescription.reference', result._link.toString());
-                        }
-                        var metaAttr = result.metadata.attribution;
-                        var versionId = metaAttr.length;
-                        var lastUpdated;
-                        if (removed) {
-                            ++versionId;
-                            lastUpdated = result.archived_on.toISOString();
-                        } else {
-                            lastUpdated = metaAttr[versionId - 1].merged.toISOString();
-                        }
-                        resource.meta = {
-                            lastUpdated: lastUpdated,
-                            versionId: versionId.toString()
-                        };
-                        if (result._components && result._components.length) {
-                            resource.related = result._components.map(function (component) {
-                                return {
-                                    target: {
-                                        reference: component.toString()
-                                    },
-                                    type: "has-component"
-                                };
-                            });
-                        }
                         callback(null, resource, removed);
                     }
                 }

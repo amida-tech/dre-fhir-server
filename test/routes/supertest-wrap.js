@@ -263,6 +263,7 @@ base._search = function (req, expectedCount, query, done) {
                 if (self.readTransform) {
                     self.readTransform(serverResource);
                 }
+                delete serverResource.meta;
                 expect(serverResource).to.deep.equal(self.entryMapById[serverResource.id]);
             }
         })
@@ -307,6 +308,7 @@ base._searchByPage = function (req, expectedCount, query, pageNo, searchKey, don
                 if (self.readTransform) {
                     self.readTransform(serverResource);
                 }
+                delete serverResource.meta;
                 expect(serverResource).to.deep.equal(self.entryMapById[serverResource.id]);
                 expect(serverResource.id).to.equal(entryIdsClone[j + offset]);
             }
