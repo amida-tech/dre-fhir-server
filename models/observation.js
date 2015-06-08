@@ -3,19 +3,21 @@
 var util = require('util');
 var bbFhir = require('blue-button-fhir');
 
-var modelsCommon = require('./models-common');
+var resource = require('./resource-with-patient');
 var bundleUtil = require('../lib/bundle-util');
 var errUtil = require('../lib/error-util');
 var modelsUtil = require('./models-util');
 
-var libraryVitals = modelsCommon({
+var libraryVitals = resource({
     sectionName: 'vitals',
-    patientRefKey: 'subject'
+    patientRefKey: 'subject',
+    searchSections: ['vitals', 'results']
 });
 
-var libraryResults = modelsCommon({
+var libraryResults = resource({
     sectionName: 'results',
-    patientRefKey: 'subject'
+    patientRefKey: 'subject',
+    searchSections: ['vitals', 'results']
 });
 
 var findSection = function (bbr, id, invalidIsError, callback) {
@@ -64,11 +66,7 @@ var paramToBBRParamMap = {
 };
 
 exports.search = function (bbr, params, callback) {
-    var settings = libraryVitals.searchSettings;
-    var referenceKeys = {
-        patientKey: 'subject'
-    };
-    modelsUtil.searchResourceWithPatient(bbr, params, ['vitals', 'results'], referenceKeys, settings, callback);
+    libraryVitals.search(bbr, params, callback);
 };
 
 exports.read = function (bbr, id, callback) {

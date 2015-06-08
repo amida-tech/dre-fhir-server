@@ -1,8 +1,8 @@
 'use strict';
 
-var modelsCommon = require('./models-common');
+var resource = require('./resource-with-patient');
 
-module.exports = modelsCommon({
+module.exports = resource({
     sectionName: 'allergies',
     patientRefKey: 'patient'
 });

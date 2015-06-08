@@ -5,12 +5,12 @@ var util = require('util');
 var _ = require('lodash');
 var bbFhir = require('blue-button-fhir');
 
-var modelsCommon = require('./models-common');
+var resource = require('./resource-with-patient');
 var presriptionModel = require('./medicationPrescription');
 var bundleUtil = require('../lib/bundle-util');
 var errUtil = require('../lib/error-util');
 
-module.exports = exports = modelsCommon({
+module.exports = exports = resource({
     sectionName: 'medications',
     patientRefKey: 'patient',
     mustLink: 'true',

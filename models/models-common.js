@@ -43,6 +43,10 @@ methods.resourceToModelEntry = function (bbr, resource, callback) {
     }
 };
 
+methods.modelEntryToResource = function (bbr, resource, callback) {
+
+};
+
 methods.saveNewResource = function (bbr, ptKey, resource, section, callback) {
     var sectionName = this.sectionName;
     modelsUtil.saveResourceAsSource(bbr, ptKey, resource, function (err, sourceId) {
@@ -90,11 +94,8 @@ methods.create = function (bbr, resource, callback) {
     this.createShared(bbr, resource, null, callback);
 };
 
-methods.search = function (bbr, params, callback) {
-    modelsUtil.searchResourceWithPatient(bbr, params, this.sectionName, this.referenceKeys, this.searchSettings, callback);
-};
-
 methods.read = function (bbr, id, callback) {
+    var self = this;
     var sectionName = this.sectionName;
     var patientRefKey = this.patientRefKey;
     bbr.idToPatientInfo(sectionName, id, function (err, patientInfo, removed) {
