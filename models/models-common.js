@@ -13,6 +13,9 @@ var bundleUtil = require('../lib/bundle-util');
 var bbudt = bbu.datetime;
 
 var methods = {};
+var bbrOptions = {
+    fhir: true
+};
 
 module.exports = function (options) {
     var result = Object.create(methods);
@@ -93,7 +96,7 @@ methods.saveNewResource = function (bbr, ptKey, resource, section, callback) {
         if (err) {
             callback(err);
         } else {
-            bbr.saveSection(sectionName, ptKey, section, sourceId, function (err, createInfo) {
+            bbr.saveSection(sectionName, ptKey, section, sourceId, bbrOptions, function (err, createInfo) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
@@ -145,7 +148,7 @@ methods.read = function (bbr, id, callback) {
             var missingMsg = util.format('No resource with id %s', id);
             callback(errUtil.error('readMissing', missingMsg));
         } else {
-            bbr.getEntry(sectionName, patientInfo.key, id, function (err, result) {
+            bbr.getEntry(sectionName, patientInfo.key, id, bbrOptions, function (err, result) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
@@ -190,7 +193,7 @@ methods.update = function (bbr, resource, callback) {
                         if (err) {
                             callback(errUtil.error('internalDbError', err.message));
                         } else {
-                            bbr.replaceEntry(sectionName, keyInfo.key, resource.id, sourceId, entry, function (err, updateInfo) {
+                            bbr.replaceEntry(sectionName, keyInfo.key, resource.id, sourceId, entry, bbrOptions, function (err, updateInfo) {
                                 if (err) {
                                     callback(errUtil.error('internalDbError', err.message));
                                 } else {

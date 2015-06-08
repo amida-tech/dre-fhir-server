@@ -10,6 +10,9 @@ var bbu = require('blue-button-util');
 var modelsUtil = require('./models-util');
 var modelsCommon = require('./models-common');
 var errUtil = require('../lib/error-util');
+var bbrOptions = {
+    fhir: true
+};
 
 module.exports = exports = modelsCommon({
     sectionName: 'demographics'
@@ -115,7 +118,7 @@ exports.read = function (bbr, id, callback) {
             var missingMsg = util.format('No resource with id %s', id);
             callback(errUtil.error('readMissing', missingMsg));
         } else {
-            bbr.getEntry('demographics', keyInfo.key, id, function (err, result) {
+            bbr.getEntry('demographics', keyInfo.key, id, bbrOptions, function (err, result) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {
