@@ -134,7 +134,6 @@ var searchWithSpec = function (bbr, searchSpec, referenceKeys, callback) {
             callback(null, bundle, searchInfo);
         }
     });
-
 };
 
 exports.searchResourceWithPatient = function (bbr, params, sectionInfo, referenceKeys, settings, callback) {
@@ -156,7 +155,8 @@ exports.searchResourceWithPatient = function (bbr, params, sectionInfo, referenc
                     section: sectionInfo,
                     query: bbrParams,
                     patientInfo: true,
-                    mustLink: settings.mustLink
+                    mustLink: settings.mustLink,
+                    resource: settings.resource
                 };
                 searchWithSpec(bbr, searchSpec, referenceKeys, callback);
             }

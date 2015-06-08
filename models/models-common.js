@@ -24,7 +24,8 @@ module.exports = function (options) {
             'patient': 'pat_key',
             'subject': 'pat_key'
         },
-        mustLink: options.mustLink
+        mustLink: options.mustLink,
+        resource: options.resource
     };
     result.referenceKeys = {
         patientKey: options.patientRefKey

@@ -30,9 +30,7 @@ medicationPresciptions = [{
         },
         "doseQuantity": {
             "value": 0.09,
-            "units": "mg/actuat",
-            "code": "mg/actuat",
-            "system": "http://unitsofmeasure.org"
+            "units": "mg/actuat"
         },
         "scheduledTiming": {
             "event": [{
@@ -154,8 +152,6 @@ medicationPresciptions = [{
         "doseQuantity": {
             "value": 0.11,
             "units": "mg/actuat",
-            "code": "mg/actuat",
-            "system": "http://unitsofmeasure.org"
         },
         "scheduledTiming": {
             "event": [{

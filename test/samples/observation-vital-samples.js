@@ -30,9 +30,7 @@ observations = [{
     },
     "valueQuantity": {
         "value": 178,
-        "units": "cm",
-        "code": "cm",
-        "system": "http://unitsofmeasure.org"
+        "units": "cm"
     },
     "issued": "2014-08-06",
     "status": "final",
@@ -50,9 +48,7 @@ observations = [{
     },
     "valueQuantity": {
         "value": 82,
-        "units": "kg",
-        "code": "kg",
-        "system": "http://unitsofmeasure.org"
+        "units": "kg"
     },
     "issued": "2014-08-06",
     "status": "final",
@@ -70,9 +66,7 @@ observations = [{
     },
     "valueQuantity": {
         "value": 150,
-        "units": "mm[Hg]",
-        "code": "mm[Hg]",
-        "system": "http://unitsofmeasure.org"
+        "units": "mm[Hg]"
     },
     "issued": "2014-08-06",
     "status": "final",
@@ -90,9 +84,7 @@ observations = [{
     },
     "valueQuantity": {
         "value": 100,
-        "units": "mm[Hg]",
-        "code": "mm[Hg]",
-        "system": "http://unitsofmeasure.org"
+        "units": "mm[Hg]"
     },
     "issued": "2014-08-06",
     "status": "final",

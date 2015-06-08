@@ -43,9 +43,7 @@ medicationAdministrations = [{
         },
         "quantity": {
             "value": 0.09,
-            "units": "mg/actuat",
-            "code": "mg/actuat",
-            "system": "http://unitsofmeasure.org"
+            "units": "mg/actuat"
         }
     },
     "prescription": {
@@ -79,9 +77,7 @@ medicationAdministrations = [{
     "dosage": {
         "quantity": {
             "value": 1,
-            "units": "tablet",
-            "code": "tablet",
-            "system": "http://unitsofmeasure.org"
+            "units": "tablet"
         }
     },
     "prescription": {
@@ -207,9 +203,7 @@ medicationAdministrations = [{
         },
         "quantity": {
             "value": 0.09,
-            "units": "mg/actuat",
-            "code": "mg/actuat",
-            "system": "http://unitsofmeasure.org"
+            "units": "mg/actuat"
         }
     },
     "prescription": {
@@ -250,9 +244,7 @@ linkedMedicationPresciptions = [{
         },
         "doseQuantity": {
             "value": 0.09,
-            "units": "mg/actuat",
-            "code": "mg/actuat",
-            "system": "http://unitsofmeasure.org"
+            "units": "mg/actuat"
         },
         "scheduledTiming": {
             "event": [{
@@ -304,9 +296,7 @@ linkedMedicationPresciptions = [{
     "dosageInstruction": [{
         "doseQuantity": {
             "value": 1,
-            "units": "tablet",
-            "code": "tablet",
-            "system": "http://unitsofmeasure.org"
+            "units": "tablet"
         },
         "scheduledPeriod": {
             "start": "2013-01-01",
@@ -434,9 +424,7 @@ linkedMedicationPresciptions = [{
         },
         "doseQuantity": {
             "value": 0.09,
-            "units": "mg/actuat",
-            "code": "mg/actuat",
-            "system": "http://unitsofmeasure.org"
+            "units": "mg/actuat"
         },
         "scheduledTiming": {
             "repeat": {
