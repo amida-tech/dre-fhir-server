@@ -16,7 +16,7 @@ exports.set1 = function () {
 
 conditions = [{
     "resourceType": "Condition",
-    "status": "confirmed",
+    "clinicalStatus": "confirmed",
     "onsetDateTime": "2012-08-05",
     "dateAsserted": "2012-08-05",
     "abatementBoolean": true,
@@ -30,7 +30,7 @@ conditions = [{
     }
 }, {
     "resourceType": "Condition",
-    "status": "confirmed",
+    "clinicalStatus": "confirmed",
     "onsetDateTime": "2012-08-15",
     "dateAsserted": "2012-08-15",
     "code": {
@@ -43,7 +43,7 @@ conditions = [{
     }
 }, {
     "resourceType": "Condition",
-    "status": "confirmed",
+    "clinicalStatus": "confirmed",
     "onsetDateTime": "2011-09-25",
     "dateAsserted": "2011-09-25",
     "code": {
@@ -56,7 +56,7 @@ conditions = [{
     }
 }, {
     "resourceType": "Condition",
-    "status": "confirmed",
+    "clinicalStatus": "confirmed",
     "onsetDateTime": "2010-01-10",
     "dateAsserted": "2010-01-10",
     "code": {
@@ -69,7 +69,7 @@ conditions = [{
     }
 }, {
     "resourceType": "Condition",
-    "status": "confirmed",
+    "clinicalStatus": "confirmed",
     "onsetDateTime": "2013-01-30",
     "dateAsserted": "2013-01-30",
     "code": {
@@ -82,7 +82,7 @@ conditions = [{
     }
 }, {
     "resourceType": "Condition",
-    "status": "confirmed",
+    "clinicalStatus": "confirmed",
     "onsetDateTime": "2011-03-10",
     "dateAsserted": "2011-03-10",
     "code": {

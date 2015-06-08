@@ -10,6 +10,9 @@ var bbu = require('blue-button-util');
 var modelsUtil = require('./models-util');
 var modelsCommon = require('./models-common');
 var errUtil = require('../lib/error-util');
+var bbrOptions = {
+    fhir: true
+};
 
 module.exports = exports = modelsCommon({
     sectionName: 'demographics'
@@ -73,6 +76,14 @@ var searchWithSpec = function (bbr, searchSpec, callback) {
                 var bundle = bbGenFhir.demographicsToFHIR(result.data);
                 var resource = bundle.entry[0];
                 resource.resource.id = result._id;
+
+                var metaAttr = result.metadata.attribution;
+                var versionId = metaAttr.length;
+                var lastUpdated = metaAttr[versionId - 1].merged.toISOString();
+                resource.resource.meta = {
+                    lastUpdated: lastUpdated,
+                    versionId: versionId.toString()
+                };
                 return resource;
             });
             var bundle = bundleUtil.toSearchSet(bundleEntry, searchInfo);
@@ -107,7 +118,7 @@ exports.read = function (bbr, id, callback) {
             var missingMsg = util.format('No resource with id %s', id);
             callback(errUtil.error('readMissing', missingMsg));
         } else {
-            bbr.getEntry('demographics', keyInfo.key, id, function (err, result) {
+            bbr.getEntry('demographics', keyInfo.key, id, bbrOptions, function (err, result) {
                 if (err) {
                     callback(errUtil.error('internalDbError', err.message));
                 } else {

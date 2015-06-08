@@ -31,22 +31,12 @@ observations = [{
     },
     "valueQuantity": {
         "value": 44,
-        "units": "%",
-        "code": "%",
-        "system": "http://unitsofmeasure.org"
+        "units": "%"
     },
     "issued": "2013-05-13",
     "status": "final",
     "reliability": "ok",
     "referenceRange": [{
-        "meaning": {
-            "coding": [{
-                "system": "http://hl7.org/fhir/referencerange-meaning",
-                "code": "normal",
-                "display": "Normal Range"
-            }],
-            "text": "Normal Range"
-        },
         "text": "41 - 53 %"
     }]
 }, {
@@ -65,7 +55,7 @@ observations = [{
     "reliability": "ok",
     "interpretation": {
         "coding": [{
-            "system": "http://hl7.org/fhir/v2/0078",
+            "system": "http://hl7.org/fhir/v3/ObservationInterpretation",
             "code": "N",
             "display": "Normal"
         }],
@@ -83,30 +73,20 @@ observations = [{
     },
     "valueQuantity": {
         "value": 10.2,
-        "units": "g/dl",
-        "code": "g/dl",
-        "system": "http://unitsofmeasure.org"
+        "units": "g/dl"
     },
     "issued": "2012-08-10",
     "status": "final",
     "reliability": "ok",
     "interpretation": {
         "coding": [{
-            "system": "http://hl7.org/fhir/v2/0078",
+            "system": "http://hl7.org/fhir/v3/ObservationInterpretation",
             "code": "N",
             "display": "Normal"
         }],
         "text": "Normal"
     },
     "referenceRange": [{
-        "meaning": {
-            "coding": [{
-                "system": "http://hl7.org/fhir/referencerange-meaning",
-                "code": "normal",
-                "display": "Normal Range"
-            }],
-            "text": "Normal Range"
-        },
         "text": "M 13-18 g/dl; F 12-16 g/dl"
     }]
 }, {
@@ -121,41 +101,27 @@ observations = [{
     },
     "valueQuantity": {
         "value": 12.3,
-        "units": "10+3/ul",
-        "code": "10+3/ul",
-        "system": "http://unitsofmeasure.org"
+        "units": "10+3/ul"
     },
     "issued": "2012-08-10",
     "status": "final",
     "reliability": "ok",
     "interpretation": {
         "coding": [{
-            "system": "http://hl7.org/fhir/v2/0078",
+            "system": "http://hl7.org/fhir/v3/ObservationInterpretation",
             "code": "N",
             "display": "Normal"
         }],
         "text": "Normal"
     },
     "referenceRange": [{
-        "meaning": {
-            "coding": [{
-                "system": "http://hl7.org/fhir/referencerange-meaning",
-                "code": "normal",
-                "display": "Normal Range"
-            }],
-            "text": "Normal Range"
-        },
         "low": {
             "value": 4.3,
-            "units": "10+3/ul",
-            "code": "10+3/ul",
-            "system": "http://unitsofmeasure.org"
+            "units": "10+3/ul"
         },
         "high": {
             "value": 10.8,
-            "units": "10+3/ul",
-            "code": "10+3/ul",
-            "system": "http://unitsofmeasure.org"
+            "units": "10+3/ul"
         }
     }]
 }, {
@@ -170,41 +136,27 @@ observations = [{
     },
     "valueQuantity": {
         "value": 123,
-        "units": "10+3/ul",
-        "code": "10+3/ul",
-        "system": "http://unitsofmeasure.org"
+        "units": "10+3/ul"
     },
     "issued": "2012-08-10",
     "status": "final",
     "reliability": "ok",
     "interpretation": {
         "coding": [{
-            "system": "http://hl7.org/fhir/v2/0078",
+            "system": "http://hl7.org/fhir/v3/ObservationInterpretation",
             "code": "L",
             "display": "Low"
         }],
         "text": "Low"
     },
     "referenceRange": [{
-        "meaning": {
-            "coding": [{
-                "system": "http://hl7.org/fhir/referencerange-meaning",
-                "code": "normal",
-                "display": "Normal Range"
-            }],
-            "text": "Normal Range"
-        },
         "low": {
             "value": 150,
-            "units": "10+3/ul",
-            "code": "10+3/ul",
-            "system": "http://unitsofmeasure.org"
+            "units": "10+3/ul"
         },
         "high": {
             "value": 350,
-            "units": "10+3/ul",
-            "code": "10+3/ul",
-            "system": "http://unitsofmeasure.org"
+            "units": "10+3/ul"
         }
     }]
 }, {

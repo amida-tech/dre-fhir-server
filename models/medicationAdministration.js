@@ -5,15 +5,16 @@ var util = require('util');
 var _ = require('lodash');
 var bbFhir = require('blue-button-fhir');
 
-var modelsCommon = require('./models-common');
+var resource = require('./resource-with-patient');
 var presriptionModel = require('./medicationPrescription');
 var bundleUtil = require('../lib/bundle-util');
 var errUtil = require('../lib/error-util');
 
-module.exports = exports = modelsCommon({
+module.exports = exports = resource({
     sectionName: 'medications',
     patientRefKey: 'patient',
-    mustLink: 'true'
+    mustLink: 'true',
+    resource: 'medicationAdministration'
 });
 exports.referenceKeys.linkKey = 'prescription.reference';
 
@@ -36,6 +37,7 @@ exports.resourceToModelEntry = function (bbr, resource, callback) {
             var medication = model && _.get(model, 'data.medications[0]');
             if (medication) {
                 medication._link = medicationPrescription.id;
+                medication._resource = 'medicationAdministration';
                 callback(null, medication);
             } else {
                 var msg = util.format('%s resource cannot be parsed', resource.resourceType);
