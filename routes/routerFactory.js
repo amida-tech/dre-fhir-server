@@ -190,7 +190,7 @@ module.exports = (function () {
         }
     };
 
-    return function (conformance) {
+    return function (conformance, protect) {
         var router = express.Router({
             caseSensitive: true
         });
@@ -205,7 +205,15 @@ module.exports = (function () {
 
             resource.interaction.forEach(function (interaction) {
                 var code = interaction.code;
-                var implementation = interactionImplementation[code](model, resourceType, searchParam);
+                var implementation;
+                if(Array.isArray(protect)) 
+                {
+                    implementation = protect.concat( [ interactionImplementation[code](model, resourceType, searchParam) ] );
+                } else if(typeof(protect) == 'function' ) {
+                    implementation = [protect, interactionImplementation[code](model, resourceType, searchParam)];
+                } else {
+                    implementation = [protect, interactionImplementation[code](model, resourceType, searchParam)];
+                }
                 var routeInfos = interactionToRoute(resourceType)[code];
                 routeInfos.forEach(function (routeInfo) {
                     var path = routeInfo.path;

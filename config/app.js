@@ -29,10 +29,10 @@ var dbmw = function (config) {
     };
 };
 
-module.exports = function (overrideConfig) {
+module.exports = function (overrideConfig, me, protect) {
     var config = _.merge({}, defaultConfig, overrideConfig);
 
-    var app = express();
+    var app = me || express();
 
     app.use(bp.json({
         'strict': false
@@ -43,13 +43,13 @@ module.exports = function (overrideConfig) {
     } else {
         app.use(dbmw(config));
     }
-    app.use(config.server.fhirUrl, routerFactory(config.conformance));
+    app.use(config.server.fhirUrl, routerFactory(config.conformance, protect));
 
-    app.get('/config', function (req, res) {
+    app.get(config.server.fhirUrl + '/config', function (req, res) {
         res.status(200);
         res.send(config);
     });
 
-    app.use(catchAllErrHandler);
+    if( typeof(config.useCatchAll) == 'undefined' || config.useCatchAll) app.use(catchAllErrHandler);
     return app;
 };
