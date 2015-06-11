@@ -209,10 +209,10 @@ module.exports = (function () {
                 if(Array.isArray(protect)) 
                 {
                     implementation = protect.concat( [ interactionImplementation[code](model, resourceType, searchParam) ] );
-                } else if(typeof(protect) == 'function' ) {
+                } else if(typeof(protect) === 'function' ) {
                     implementation = [protect, interactionImplementation[code](model, resourceType, searchParam)];
                 } else {
-                    implementation = [protect, interactionImplementation[code](model, resourceType, searchParam)];
+                    implementation = interactionImplementation[code](model, resourceType, searchParam);
                 }
                 var routeInfos = interactionToRoute(resourceType)[code];
                 routeInfos.forEach(function (routeInfo) {

@@ -50,6 +50,6 @@ module.exports = function (overrideConfig, me, protect) {
         res.send(config);
     });
 
-    if( typeof(config.useCatchAll) == 'undefined' || config.useCatchAll) app.use(catchAllErrHandler);
+    if( typeof(config.useCatchAll) === 'undefined' || config.useCatchAll) { app.use(catchAllErrHandler); }
     return app;
 };
