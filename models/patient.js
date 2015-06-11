@@ -135,7 +135,9 @@ exports.read = function (bbr, id, callback) {
                             ++versionId;
                             lastUpdated = result.archived_on.toISOString();
                         } else {
-                            lastUpdated = metaAttr[versionId - 1].merged.toISOString();
+                            var prevVersion = versionId-1;
+                            if( prevVersion >= 0 && (metaAttr && (prevVersion < metaAttr.length) ) )
+                            lastUpdated = metaAttr[prevVersion].merged.toISOString();
                         }
                         resource.meta = {
                             lastUpdated: lastUpdated,
