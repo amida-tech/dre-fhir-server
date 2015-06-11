@@ -43,6 +43,12 @@ var fhirServer = module.exports = {
 	}
 };
 
+// Use this to support acceptance testing
+var args = process.argv.slice(2);
+if( args && args.length >0 && args[0].toLowerCase === "startfhir") {
+	fhirServer.serve();
+}
+
 /**
  * Standard Express's callback.
  * @callback ExpressCallback
