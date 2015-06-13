@@ -8,7 +8,7 @@ var fhirApp = require('../config/app');
 
 var errorUtil = require('../lib/error-util');
 
-describe('default error handler', function () {
+xdescribe('default error handler', function () {
     var app;
     var server;
     var api;
