@@ -1,6 +1,6 @@
 {
     "name": "dre-fhir-server",
-    "version": "1.5.0",
+    "version": "1.6.0-beta.1",
     "description": "DRE FHIR Server",
     "main": "./server.js",
     "directories": {
@@ -23,10 +23,10 @@
         "node": ">= 0.10.0"
     },
     "dependencies": {
-        "blue-button-fhir": "~1.5.0",
-        "blue-button-gen-fhir": "~1.5.0",
+        "blue-button-fhir": "^1.6.0-beta",
+        "blue-button-gen-fhir": "^1.6.0-beta",
         "blue-button-record": "~1.5.0",
-        "blue-button-util": "~1.5.0",
+        "blue-button-util": "^1.6.0-beta",
         "body-parser": "~1.12.3",
         "express": "~4.12.3",
         "lodash": "~3.9.3",
